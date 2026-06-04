@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String         @id @default(cuid())
+  email        String?        @unique
+  name         String?
+  image        String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  accounts     Account[]
+  sessions     Session[]
+  scripts      Script[]
+  topics       Topic[]
+  generationStates GenerationState[]
+  subscription Subscription?
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Topic {
+  id        String   @id @default(cuid())
+  userId    String
+  niche     String
+  mode      String   // "mode-a" | "mode-b" | "mode-n" | "conversion" | "trust"
+  content   String   @db.Text  // raw markdown output
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, createdAt])
+}
+
+model Script {
+  id              String   @id @default(cuid())
+  userId          String
+  topic           String
+  outputJson      Json
+  outputMarkdown  String   @db.Text
+  emotionPath     String?
+  tonePersona     String?
+  chassisFormula  String?
+  contentType     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model GenerationState {
+  id             String   @id @default(cuid())
+  userId         String
+  niche          String
+  mode           String   // "mode-a" | "mode-b" | "mode-n" | "conversion" | "trust"
+  lockedAnalysis Json     // Part -1/0分析结论（各mode字段不同）
+  usedAngles     String[] // 已用选题角度摘要
+  usedCodes      String[] // 已用代码编号
+  usedMolds      String[] // 已用模具/秀肌肉方式
+  batchCount     Int      @default(1)
+  lastGeneratedAt DateTime @updatedAt
+  createdAt      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, niche, mode])
+  @@index([userId, lastGeneratedAt])
+}
+
+model InviteCode {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  credits   Int       @default(50)
+  usedBy    String?   // userId
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  createdBy String    // admin userId
+
+  @@index([code])
+  @@index([usedBy])
+}
+
+model Subscription {
+  id           String    @id @default(cuid())
+  userId       String    @unique
+  plan         Plan      @default(FREE)
+  status       SubStatus @default(ACTIVE)
+  monthlyQuota Int       @default(50)    // 复用：每月恢复的积分额度
+  quotaUsed    Int       @default(0)     // 复用：本月已用=monthlyQuota-剩余积分(credits)
+  quotaResetAt DateTime  @default(now())
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum Plan {
+  FREE    // 映射 → 试用版 50分
+  PRO     // 映射 → 创作者版 300分
+  ENTERPRISE // 映射 → 工作室版 1500分
+}
+
+enum SubStatus {
+  ACTIVE
+  CANCELLED
+  PAST_DUE
+  EXPIRED
+}
