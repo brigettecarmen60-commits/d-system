@@ -168,14 +168,14 @@ export default function TopicsPage() {
           <div className="flex items-center justify-center gap-3 pt-4 border-t">
             {regenState?.exists ? (
               <>
-                <Button onClick={handleRegenerate} disabled={phase === "generating"} className="bg-amber-500 hover:bg-amber-600 text-white">
+                <Button onClick={handleRegenerate} className="bg-amber-500 hover:bg-amber-600 text-white">
                   <Zap className="h-4 w-4 mr-2" />热再生（换一批）
                 </Button>
                 <span className="text-xs text-muted-foreground">已生成 {regenState.batchCount} 批 · 预计节省 ~{regenState.estimatedSaving}% token</span>
                 <Button variant="ghost" size="sm" onClick={() => runColdRestart(niche, activeMode)}><RotateCcw className="h-3.5 w-3.5 mr-1" />重新分析</Button>
               </>
             ) : (
-              <Button variant="outline" onClick={handleGenerate} disabled={phase === "generating"}>
+              <Button variant="outline" onClick={handleGenerate}>
                 <RotateCcw className="h-4 w-4 mr-2" />换一批（冷启动）
               </Button>
             )}
