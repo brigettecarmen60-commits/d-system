@@ -2,6 +2,7 @@ import { NextRequest } from "next/server"
 import { db } from "@/lib/db"
 
 // 注册API：邮箱 + 邀请码 → 激活账号 + 积分到账
+export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
 export async function POST(req: NextRequest) {

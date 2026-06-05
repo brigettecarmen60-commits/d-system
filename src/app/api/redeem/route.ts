@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { addCredits } from "@/lib/usage"
 
+export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
 export async function POST(req: NextRequest) {
