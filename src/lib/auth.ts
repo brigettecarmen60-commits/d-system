@@ -14,25 +14,41 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Credentials({
       credentials: {
         email: { label: "邮箱", type: "text" },
+        password: { label: "密码", type: "password" },
         code: { label: "邀请码", type: "text" },
       },
       async authorize(credentials) {
         const email = (credentials as any)?.email?.trim() || ""
+        const password = (credentials as any)?.password || ""
         const code = (credentials as any)?.code?.trim() || ""
         if (!email) return null
 
         const adminEmail = process.env.ADMIN_EMAIL
+        const adminPassword = process.env.ADMIN_PASSWORD
         const isDev = process.env.NODE_ENV !== "production"
 
-        // 管理员登录（dev 模式：任意邮箱；生产：ADMIN_EMAIL）
-        if (isDev || email === adminEmail) {
+        // 管理员登录
+        if (adminEmail && adminPassword && email === adminEmail && password === adminPassword) {
           let user = await db.user.findUnique({ where: { email } })
-          if (!user) user = await db.user.create({ data: { email, name: email === adminEmail ? "管理员" : email.split("@")[0] } })
+          if (!user) user = await db.user.create({ data: { email, name: "管理员" } })
           const sub = await db.subscription.findUnique({ where: { userId: user.id } })
           if (!sub) {
             await db.subscription.create({
-              data: { userId: user.id, plan: "FREE",
-                monthlyQuota: email === adminEmail ? 9999 : 50, quotaUsed: 0,
+              data: { userId: user.id, plan: "FREE", monthlyQuota: 9999, quotaUsed: 0,
+                quotaResetAt: new Date(Date.now() + 365 * 86400000) },
+            })
+          }
+          return { id: user.id, email: user.email!, name: user.name }
+        }
+
+        // 开发模式：无需密码
+        if (isDev) {
+          let user = await db.user.findUnique({ where: { email } })
+          if (!user) user = await db.user.create({ data: { email, name: email.split("@")[0] } })
+          const sub = await db.subscription.findUnique({ where: { userId: user.id } })
+          if (!sub) {
+            await db.subscription.create({
+              data: { userId: user.id, plan: "FREE", monthlyQuota: 50, quotaUsed: 0,
                 quotaResetAt: new Date(Date.now() + 30 * 86400000) },
             })
           }
