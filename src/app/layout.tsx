@@ -4,6 +4,8 @@ import { Toaster } from "@/components/ui/sonner"
 import { siteConfig } from "@/config/site"
 import "./globals.css"
 
+export const dynamic = "force-dynamic"
+
 export const metadata: Metadata = {
   title: {
     default: siteConfig.name,
@@ -28,4 +30,3 @@ export default function RootLayout({
     </html>
   )
 }
-// force fresh build Fri Jun  5 14:53:55     2026
