@@ -28,6 +28,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const isDev = process.env.NODE_ENV !== "production"
 
         // 管理员登录
+        console.log("LOGIN_ATTEMPT", { email, hasPassword: !!password, adminEmail, hasAdminPassword: !!adminPassword })
         if (adminEmail && adminPassword && email === adminEmail && password === adminPassword) {
           let user = await db.user.findUnique({ where: { email } })
           if (!user) user = await db.user.create({ data: { email, name: "管理员" } })
