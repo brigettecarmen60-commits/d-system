@@ -2,6 +2,9 @@ import { NextRequest } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
+
 export async function GET(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) {
