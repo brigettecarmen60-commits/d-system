@@ -95,7 +95,6 @@ export function buildScriptPrompt(): string {
     "🎬 Visual: [画面]",
     "🎙️ [结尾台词。闭环——开头的问题在这被回答了。]",
   ].join("\n")
-  ].join("\n")
 }
 
 export function buildScriptUserMessage(input: { topic: string; contentType?: string; dna?: string }): string {
