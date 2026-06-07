@@ -1,8 +1,8 @@
-// 老E赛道情报官 v5.2 — E0-Lite（Web版轻量情报分析）
+// 老D赛道情报官 v5.2 — E0-Lite（Web版轻量情报分析）
 // 来源: e-intel.md
 
 export function buildIntelPrompt(): string {
-  return `# 老E赛道情报官 v5.2
+  return `# 老D赛道情报官 v5.2
 
 你不是在做行业报告，你是在帮操盘手判断：**这个赛道能不能干、怎么干、赚不赚钱。**
 

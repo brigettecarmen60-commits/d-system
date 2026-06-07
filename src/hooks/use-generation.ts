@@ -76,8 +76,8 @@ export function useGeneration() {
     await streamFetch({ mode: topicMode, niche: niche.trim(), ...extra })
   }, [streamFetch])
 
-  const runScript = useCallback(async (topic: string, contentType?: string) => {
-    await streamFetch({ mode: "script", topic: topic.trim(), contentType: contentType || "auto" })
+  const runScript = useCallback(async (topic: string, contentType?: string, dna?: string) => {
+    await streamFetch({ mode: "script", topic: topic.trim(), contentType: contentType || "auto", dna: dna || undefined })
   }, [streamFetch])
 
   // ─── 再生机制 ──────────────────────────────
@@ -126,16 +126,45 @@ export function useGeneration() {
     const blocks = md.split(/━━━/)
     for (const block of blocks) {
       if (!block.trim() || block.trim().length < 5) continue
-      const titleMatch = block.match(/(?:📋\s*)?标题[：:]\s*(.+)/m)
-      if (titleMatch) {
-        const typeMatch = block.match(/(?:🎬\s*)?拍摄形式[：:]\s*(.+)/m)
-        const whyMatch = block.match(/(?:💡\s*)?为什么[：:]\s*(.+)/m)
-        topics.push({
-          title: titleMatch[1].trim(),
-          type: typeMatch?.[1]?.trim() || "",
-          detail: whyMatch?.[1]?.trim() || "",
-        })
+      const lines = block.split("\n").map(l => l.trim()).filter(l => l.length > 0)
+      // 跳过纯header块
+      if (lines.length === 1 && lines[0].includes("选题")) continue
+
+      // 找标题：第一个不以 拍/停/站/怎么/为什么/桥段/📋/🎬/💡 开头的有意义行
+      let title = ""
+      for (const line of lines) {
+        if (/^(拍|停|站|怎么拍|为什么有趣|为什么停|桥段|立场)[：:]/.test(line)) continue
+        if (/^(📋|🎬|💡)/.test(line)) continue
+        if (/^选题\s*\d/.test(line)) continue
+        if (line.length >= 3) { title = line; break }
       }
+      if (!title) {
+        const oldMatch = block.match(/(?:📋\s*)?标题[：:]\s*(.+)/m)
+        if (oldMatch) title = oldMatch[1].trim()
+      }
+      if (!title) continue
+
+      // 提取各个字段
+      const shootMatch = block.match(/(?:怎么拍|拍什么|拍)[：:]\s*(.+)/m)
+      const funMatch = block.match(/(?:为什么有趣)[：:]\s*(.+)/m)
+      const stopMatch = block.match(/(?:为什么停|停)[：:]\s*(.+)/m)
+      const bridgeMatch = block.match(/桥段[：:]\s*(.+)/m)
+      const stanceMatch = block.match(/立场[：:]\s*(.+)/m)
+      const typeMatch = block.match(/(?:🎬\s*)?(?:拍摄形式|怎么拍)[：:]\s*(.+)/m)
+      const whyMatch = block.match(/(?:💡\s*)?(?:为什么能火|为什么)[：:]\s*(.+)/m)
+
+      const detailParts = [
+        shootMatch?.[1]?.trim(),
+        bridgeMatch?.[1]?.trim(),
+        stanceMatch?.[1]?.trim(),
+      ].filter(Boolean)
+      const funText = funMatch?.[1]?.trim() || stopMatch?.[1]?.trim() || whyMatch?.[1]?.trim() || ""
+
+      topics.push({
+        title,
+        type: typeMatch?.[1]?.trim() || bridgeMatch?.[1]?.trim() || "",
+        detail: funText || detailParts.join(" · ") || "",
+      })
     }
     return topics
   }

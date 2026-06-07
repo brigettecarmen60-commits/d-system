@@ -1,8 +1,8 @@
-// 老E内容工厂路由层 v5.0 — 脚本路由+生成 system prompt
+// 老D内容工厂路由层 v5.0 — 脚本路由+生成 system prompt
 // 来源: e-copy.md + e-traffic-script.md + e-conversion-script.md
 
 export function buildScriptSystemPrompt(): string {
-  return `# 老E内容工厂 v5.0
+  return `# 老D内容工厂 v5.0
 
 你不是在"写脚本"，你是在**设计一份礼物**。每条短视频都是一份礼——必须在第一秒就让他觉得"这跟我有关"，中间每一秒都在给他东西，看完他能带走一个值得带走的东西。
 
@@ -210,6 +210,6 @@ export function buildScriptUserMessage(params: {
   if (params.contentType && params.contentType !== "auto") {
     parts.push(`【内容目的偏好】${params.contentType}`)
   }
-  parts.push("请按老E内容工厂方法论，先做路由判定（框架/文案驱动→to who→叙事结构→目的），然后执行对应管线生成完整脚本。")
+  parts.push("请按老D内容工厂方法论，先做路由判定（框架/文案驱动→to who→叙事结构→目的），然后执行对应管线生成完整脚本。")
   return parts.join("\n\n")
 }

@@ -1,20 +1,20 @@
-// 老E流量工厂 v1.0 — 完整方法论（忠实翻译自 e-traffic.md）
+// 老D流量工厂 v1.0 — 完整方法论（忠实翻译自 e-traffic.md）
 // 包含：9步工作流 × 模式A(纪实) × 模式B(荒诞) × 文化水温 × 61代码库
 
 import { CODE_LIBRARY } from "./e-code-library"
 
 export function buildTrafficTopicPrompt(e0Intel: string): string {
   return [
-    "# 老E流量工厂 v1.0",
+    "# 老D流量工厂 v1.0",
     "",
-    "你是老E流量工厂，Gem1的直系进化版。你继承了Gem1的全部核心引擎，并在7个维度完成进化。",
+    "你是老D流量工厂，Gem1的直系进化版。你继承了Gem1的全部核心引擎，并在7个维度完成进化。",
     "",
     "## 你是谁",
     "",
     "你的任务：产出10条具备\"掠夺力+建设力\"双重穿透的流量型选题。",
     "",
     "Gem1只问：什么能让观众3秒内停下来？（掠夺注意力）",
-    "老E还问：什么能让观众觉得\"这说的就是我\"？（建设归属感）",
+    "老D还问：什么能让观众觉得\"这说的就是我\"？（建设归属感）",
     "        什么能让观众转发时表达自己的身份？（社交货币）",
     "",
     "---",
@@ -43,7 +43,7 @@ export function buildTrafficTopicPrompt(e0Intel: string): string {
     "钱/性/安全/隐私/真假/公平/时间/极限/对立/身份",
     "→ 触发：恐惧、好奇、贪婪、愤怒、窥私欲",
     "",
-    "### 正向驱动（5个）★老E新增——建设归属感",
+    "### 正向驱动（5个）★老D新增——建设归属感",
     "- 向往：\"我也想成为那样\"——身份投射、理想生活方式、人生可能性",
     "- 归属：\"终于有人懂我了\"——嘴替、共鸣、找到组织、被理解感",
     "- 敬畏：\"原来世界这么奇妙\"——科学之美、人类创造力、自然奇观",
@@ -214,7 +214,7 @@ export function buildTrafficTopicUserMessage(input: { niche: string; targetAudie
   const parts = ["【赛道】" + input.niche]
   if (input.targetAudience) parts.push("【目标受众】" + input.targetAudience)
   parts.push("")
-  parts.push("请严格按老E流量工厂的9步工作流（从文化水温感知到代码激活到选题生成），产出10条流量型选题。")
+  parts.push("请严格按老D流量工厂的9步工作流（从文化水温感知到代码激活到选题生成），产出10条流量型选题。")
   parts.push("每条必须包含：双标题、底层好奇代码、代码激活证据、纪实模具三角、社交货币、系列化标记、双层共识。")
   return parts.join("\n")
 }

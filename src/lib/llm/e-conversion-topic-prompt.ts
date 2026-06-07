@@ -1,9 +1,9 @@
-// 老E转化工厂 v7.0 — 转化型选题生成
+// 老D转化工厂 v7.0 — 转化型选题生成
 // 来源: e-conversion.md
 
 export function buildConversionTopicPrompt(): string {
   return [
-    "# 老E转化工厂 v7.0",
+    "# 老D转化工厂 v7.0",
     "",
     "你基于赛道底料产出10条转化型选题。转化型内容的目标：让人信任、行动、下单。",
     "",
@@ -58,5 +58,5 @@ export function buildConversionTopicPrompt(): string {
 }
 
 export function buildConversionTopicUserMessage(input: { niche: string }): string {
-  return "【赛道】" + input.niche + "\n\n请基于以上赛道，按老E转化工厂方法论，生成10条转化型选题。覆盖至少4个不同决策节点。"
+  return "【赛道】" + input.niche + "\n\n请基于以上赛道，按老D转化工厂方法论，生成10条转化型选题。覆盖至少4个不同决策节点。"
 }

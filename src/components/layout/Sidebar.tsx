@@ -4,13 +4,14 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Search, Lightbulb, PenLine, FileText, Settings, Sparkles, Compass, Ticket, Loader2, Shield, BarChart3 } from "lucide-react"
+import { Search, Lightbulb, PenLine, FileText, Settings, Sparkles, Compass, Ticket, Loader2, Shield, BarChart3, Coffee } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Input } from "@/components/ui/input"
 
 const navItems = [
   { title: "赛道分析", href: "/analyze", icon: Search },
   { title: "个人定位", href: "/positioning", icon: Compass },
+  { title: "普通人挖掘", href: "/c-content", icon: Coffee },
   { title: "选题生成", href: "/topics", icon: Lightbulb },
   { title: "写脚本", href: "/script", icon: PenLine },
   { title: "内容复盘", href: "/retro", icon: BarChart3 },

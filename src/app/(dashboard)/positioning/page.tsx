@@ -5,10 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Compass, Loader2, Copy, Check, ArrowRight, ArrowLeft, Sparkles, Download } from "lucide-react"
+import { Compass, Loader2, ArrowRight, ArrowLeft, Sparkles } from "lucide-react"
 import { useGeneration } from "@/hooks/use-generation"
-import { downloadMarkdown } from "@/lib/utils"
+import { PositioningReport } from "./report"
 
 const STEPS = [
   { num: 1, title: "基本情况", desc: "Phase 0 前置判断" },
@@ -44,14 +43,12 @@ function RadioGroup({ options, value, onChange }: { options: string[]; value: st
 
 export default function PositioningPage() {
   const [step, setStep] = useState(1)
-  const [copied, setCopied] = useState(false)
 
   // Step 1: 基本情况
   const [niche, setNiche] = useState("")
   const [contentStatus, setContentStatus] = useState("")   // Q1
   const [revenueStatus, setRevenueStatus] = useState("")    // Q2
   const [corePurpose, setCorePurpose] = useState("")
-  const [acceptDirection, setAcceptDirection] = useState("") // Q3
 
   // Step 2: 优势与投入
   const [advantage, setAdvantage] = useState("")            // Q4
@@ -69,12 +66,8 @@ export default function PositioningPage() {
   const [selfIntro, setSelfIntro] = useState("")            // Q15
 
   // Step 4: 差异化与角色
-  const [monetization, setMonetization] = useState("")      // Q9
-  const [operatorRole, setOperatorRole] = useState("")      // Q10
-  const [contentOutput, setContentOutput] = useState("")    // Q11
-  const [commStyle, setCommStyle] = useState("")            // Q12
-  const [acceptLongTerm, setAcceptLongTerm] = useState("")  // Q13
-  const [ifNotWorth, setIfNotWorth] = useState("")          // Q14
+  const [monetization, setMonetization] = useState("")
+  const [contentOutput, setContentOutput] = useState("")
   const [differentiation, setDifferentiation] = useState("")
   const [signatureStyle, setSignatureStyle] = useState("")
   const [targetAudience, setTargetAudience] = useState("")
@@ -99,7 +92,6 @@ export default function PositioningPage() {
       "【是否已在做内容】" + (contentStatus || "未填"),
       "【变现状态】" + (revenueStatus || "未填"),
       "【核心目的】" + (corePurpose || "未填"),
-      "【是否接受策划指导】" + (acceptDirection || "未填"),
       "",
       "===== Phase 1: 商业模式 =====",
       "【核心优势】" + (advantage || "未填"),
@@ -118,11 +110,7 @@ export default function PositioningPage() {
       "",
       "===== Phase 3: 基因打包 =====",
       "【变现手段】" + (monetization || "未填"),
-      "【期望操盘手角色】" + (operatorRole || "未填"),
       "【内容产出方式】" + (contentOutput || "未填"),
-      "【沟通偏好】" + (commStyle || "未填"),
-      "【长期主义接受度】" + (acceptLongTerm || "未填"),
-      "【如果IP不值做】" + (ifNotWorth || "未填"),
       "【差异化定位】" + (differentiation || "未填"),
       "【标志性风格】" + (signatureStyle || "未填"),
       "【目标用户】" + (targetAudience || "未填"),
@@ -134,10 +122,6 @@ export default function PositioningPage() {
     runPositioning(niche, buildPersonalInfo())
   }
 
-  function extractSummary(text: string): string {
-    const match = text.match(/⚡ 定位完成([\s\S]*?)(?=```json|{)/)
-    return match ? match[0].trim() : ""
-  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -187,12 +171,6 @@ export default function PositioningPage() {
             <div>
               <label className="text-sm font-medium mb-1.5 block">核心目的是什么？</label>
               <Input placeholder="主要为了赚钱，还是为了影响力/表达？还是两者都要？" value={corePurpose} onChange={e => setCorePurpose(e.target.value)} />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">是否愿意接受策划/导演的指导（改变表达方式）？</label>
-              <RadioGroup options={[
-                "1. 愿意，只要逻辑说得通", "2. 有点抗拒，可以商量", "3. 不太愿意"
-              ]} value={acceptDirection} onChange={setAcceptDirection} />
             </div>
             <div className="flex justify-end pt-2">
               <Button onClick={() => setStep(2)} disabled={!canProceed(1)} className="bg-black text-white hover:bg-black/90 rounded-full">
@@ -302,34 +280,10 @@ export default function PositioningPage() {
               ]} value={monetization} onChange={setMonetization} />
             </div>
             <div>
-              <label className="text-sm font-medium mb-2 block">你希望操盘手/系统扮演什么角色？</label>
-              <RadioGroup options={[
-                "1. 战略判断——告诉我方向对不对", "2. 结构设计——帮我搭建内容体系", "3. 执行指导——教我具体怎么拍怎么写", "4. 全程——都交给你"
-              ]} value={operatorRole} onChange={setOperatorRole} />
-            </div>
-            <div>
               <label className="text-sm font-medium mb-2 block">内容产出，你预期怎么做？</label>
               <RadioGroup options={[
                 "1. 全部自己创作", "2. 分工——我出思路，系统出稿", "3. 找人替我拍/写"
               ]} value={contentOutput} onChange={setContentOutput} />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">沟通方式偏好？</label>
-              <RadioGroup options={[
-                "1. 直接，偏理性——告诉我为什么", "2. 文字沟通为主", "3. 情感支持——需要鼓励"
-              ]} value={commStyle} onChange={setCommStyle} />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">是否接受"长期主义"——前期可能没回报？</label>
-              <RadioGroup options={[
-                "1. 接受", "2. 视情况而定", "3. 不太接受"
-              ]} value={acceptLongTerm} onChange={setAcceptLongTerm} />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">如果分析后确定这个IP不值得做，你希望我怎么做？</label>
-              <RadioGroup options={[
-                "1. 直说原因，不用绕弯", "2. 给综合分析，委婉一点", "3. 帮我找到替代方向"
-              ]} value={ifNotWorth} onChange={setIfNotWorth} />
             </div>
             <div>
               <label className="text-sm font-medium mb-1.5 block">你的差异化是什么？</label>
@@ -369,40 +323,7 @@ export default function PositioningPage() {
           )}
 
           {phase === "complete" && rawText && (
-            <>
-              {extractSummary(rawText) && (
-                <Card className="border border-gray-100 shadow-none border-l-4 border-l-black">
-                  <CardContent className="p-5">
-                    <h3 className="text-sm font-semibold mb-3">📋 定位摘要</h3>
-                    <pre className="text-sm whitespace-pre-wrap font-sans">{extractSummary(rawText)}</pre>
-                  </CardContent>
-                </Card>
-              )}
-
-              <Card className="border border-gray-100 shadow-none">
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-bold">Strategy_DNA</h2>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={async () => {
-                        await navigator.clipboard.writeText(rawText)
-                        setCopied(true)
-                        setTimeout(() => setCopied(false), 2000)
-                      }}>
-                        {copied ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
-                        {copied ? "已复制" : "复制"}
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => downloadMarkdown(rawText, `定位-${niche.slice(0,10)}-${new Date().toISOString().slice(0,10)}`)}>
-                        <Download className="h-4 w-4 mr-1" />导出
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => { reset(); setStep(1) }}>重新定位</Button>
-                    </div>
-                  </div>
-                  <pre className="text-sm whitespace-pre-wrap font-sans bg-gray-50 rounded-xl p-4 max-h-[500px] overflow-y-auto leading-relaxed">{rawText}</pre>
-                  <p className="text-xs text-gray-400 border-t pt-3">复制 Strategy_DNA，粘贴到选题生成页面的 DNA 输入框中。</p>
-                </CardContent>
-              </Card>
-            </>
+            <PositioningReport rawText={rawText} niche={niche} />
           )}
 
           {phase === "error" && (

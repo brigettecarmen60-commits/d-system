@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Lightbulb, Loader2, RotateCcw, Coins, Copy, Check, TrendingUp, Sparkles, Brain, Target, Heart, Save, Zap, Download } from "lucide-react"
+import { Lightbulb, Loader2, RotateCcw, Copy, Check, TrendingUp, Sparkles, Brain, Target, Heart, Save, Zap, Download } from "lucide-react"
 import { useGeneration } from "@/hooks/use-generation"
 import { downloadMarkdown } from "@/lib/utils"
 
@@ -23,7 +23,7 @@ export default function TopicsPage() {
   const [dna, setDna] = useState("")
   const [activeMode, setActiveMode] = useState("mode-a")
   const [copied, setCopied] = useState<string | null>(null)
-  const { phase, statusMessage, rawText, tokens, usedModel, error, isRegeneration, regenState,
+  const { phase, statusMessage, rawText, error, isRegeneration, regenState,
     runTopics, reset, parseTopics, checkRegenState, runRegenerate, runColdRestart } = useGeneration()
 
   const topics = (phase === "complete" || phase === "generating") && rawText ? parseTopics(rawText) : []
@@ -56,14 +56,6 @@ export default function TopicsPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <h1 className="text-2xl font-bold flex items-center gap-2"><Lightbulb className="h-6 w-6 text-amber-500" />选题生成</h1>
-
-      {tokens && phase === "complete" && (
-        <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-          <Coins className="h-3.5 w-3.5" />{tokens.totalTokens.toLocaleString()} tokens
-          {usedModel && <span className="opacity-50">| {usedModel}</span>}
-          {isRegeneration && <span className="text-green-500">| 热再生</span>}
-        </div>
-      )}
 
       {phase === "idle" && (
         <Card className="glass border-0 shadow-sm">
@@ -116,7 +108,7 @@ export default function TopicsPage() {
           <CardContent className="py-16 text-center space-y-5">
             <Loader2 className="h-10 w-10 text-amber-500 animate-spin mx-auto" />
             <p className="text-lg font-medium">{statusMessage}</p>
-            {rawText && <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-sans bg-muted/30 rounded-xl p-4 text-left max-h-48 overflow-y-auto">{rawText.slice(-500)}</pre>}
+            {rawText && <pre className="text-sm whitespace-pre-wrap font-sans bg-muted/30 rounded-xl p-4 text-left max-h-48 overflow-y-auto blur-[3px] select-none pointer-events-none">{rawText.slice(-500)}</pre>}
             <Button variant="outline" size="sm" onClick={reset}>取消</Button>
           </CardContent>
         </Card>
@@ -146,20 +138,9 @@ export default function TopicsPage() {
           <div className="grid gap-3">
             {topics.map((t, i) => (
               <Card key={i} className="glass border-0 shadow-sm group">
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold leading-snug mb-2">{t.title}</h3>
-                      {t.type && <Badge variant="secondary" className="text-xs">{t.type}</Badge>}
-                      {t.detail && <p className="text-xs text-muted-foreground mt-2 line-clamp-3">{t.detail}</p>}
-                    </div>
-                    <Button
-                      variant="ghost" size="sm" className="shrink-0 opacity-0 group-hover:opacity-100 smooth"
-                      onClick={() => handleCopy(t.title + "\n" + (t.detail || ""))}
-                    >
-                      <Copy className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
+                <CardContent className="p-4 space-y-2">
+                  <h3 className="font-semibold leading-snug">{t.title}</h3>
+                  {t.detail && <p className="text-sm text-muted-foreground leading-relaxed">{t.detail}</p>}
                 </CardContent>
               </Card>
             ))}

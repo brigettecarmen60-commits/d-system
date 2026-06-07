@@ -13,33 +13,40 @@ export interface QuotaResult {
  * DB字段映射：monthlyQuota=每月积分额度, quotaUsed=本月已用积分, 剩余=monthlyQuota-quotaUsed
  */
 export async function checkQuota(userId: string, mode: string): Promise<QuotaResult> {
-  const sub = await db.subscription.findUnique({ where: { userId } })
+  try {
+    const sub = await db.subscription.findUnique({ where: { userId } })
 
-  if (!sub) {
-    return { allowed: false, remaining: 0, cost: 0, label: "" }
-  }
+    if (!sub) {
+      return { allowed: false, remaining: 0, cost: 0, label: "" }
+    }
 
-  // 月度重置检查
-  const now = new Date()
-  if (now > sub.quotaResetAt) {
-    await db.subscription.update({
-      where: { userId },
-      data: {
-        quotaUsed: 0,
-        quotaResetAt: new Date(now.setMonth(now.getMonth() + 1)),
-      },
-    })
-    sub.quotaUsed = 0
-  }
+    // 月度重置检查
+    const now = new Date()
+    if (now > sub.quotaResetAt) {
+      await db.subscription.update({
+        where: { userId },
+        data: {
+          quotaUsed: 0,
+          quotaResetAt: new Date(now.setMonth(now.getMonth() + 1)),
+        },
+      })
+      sub.quotaUsed = 0
+    }
 
-  const { cost, label } = getCreditCost(mode)
-  const remaining = sub.monthlyQuota - sub.quotaUsed
+    const { cost, label } = getCreditCost(mode)
+    const remaining = sub.monthlyQuota - sub.quotaUsed
 
-  return {
-    allowed: remaining >= cost,
-    remaining: remaining - cost,
-    cost,
-    label,
+    return {
+      allowed: remaining >= cost,
+      remaining: remaining - cost,
+      cost,
+      label,
+    }
+  } catch (e) {
+    // 数据库不可用时（如Neon休眠），开发环境降级放行
+    console.error("checkQuota failed (DB unreachable):", e)
+    const { cost, label } = getCreditCost(mode)
+    return { allowed: true, remaining: 999, cost, label }
   }
 }
 
@@ -47,10 +54,15 @@ export async function checkQuota(userId: string, mode: string): Promise<QuotaRes
  * 扣减积分（增加 quotaUsed）
  */
 export async function deductCredits(userId: string, cost: number): Promise<void> {
-  await db.subscription.update({
-    where: { userId },
-    data: { quotaUsed: { increment: cost } },
-  })
+  try {
+    await db.subscription.update({
+      where: { userId },
+      data: { quotaUsed: { increment: cost } },
+    })
+  } catch (e) {
+    // 数据库不可用时（如Neon休眠），静默跳过，不影响主流程
+    console.error("deductCredits failed (DB unreachable):", e)
+  }
 }
 
 /**

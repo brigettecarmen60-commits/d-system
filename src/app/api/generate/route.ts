@@ -16,6 +16,7 @@ import { buildConversionTopicPrompt, buildConversionTopicUserMessage } from "@/c
 import { buildTrustTopicPrompt, buildTrustTopicUserMessage } from "@/config/prompts/trust-topic"
 import { buildScriptPrompt, buildScriptUserMessage } from "@/config/prompts/script"
 import { buildPositioningPrompt, buildPositioningUserMessage } from "@/config/prompts/positioning"
+import { buildCContentPrompt, buildCContentUserMessage } from "@/config/prompts/c-content"
 import { buildRetroPrompt, buildRetroUserMessage } from "@/config/prompts/retro"
 import {
   extractAnglesFromOutput,
@@ -37,18 +38,24 @@ async function getUserId(): Promise<string | null> {
 
   // 开发环境：无需登录即可使用
   if (process.env.NODE_ENV !== "production") {
-    const devEmail = "admin@dev.local"
-    let user = await db.user.findUnique({ where: { email: devEmail } })
-    if (!user) user = await db.user.create({ data: { email: devEmail, name: "管理员" } })
-    const sub = await db.subscription.findUnique({ where: { userId: user.id } })
-    if (!sub) {
-      await db.subscription.create({ data: { userId: user.id, plan: "FREE", monthlyQuota: 50, quotaUsed: 0, quotaResetAt: new Date(Date.now() + 30 * 86400000) } })
+    try {
+      const devEmail = "admin@dev.local"
+      let user = await db.user.findUnique({ where: { email: devEmail } })
+      if (!user) user = await db.user.create({ data: { email: devEmail, name: "管理员" } })
+      const sub = await db.subscription.findUnique({ where: { userId: user.id } })
+      if (!sub) {
+        await db.subscription.create({ data: { userId: user.id, plan: "FREE", monthlyQuota: 50, quotaUsed: 0, quotaResetAt: new Date(Date.now() + 30 * 86400000) } })
+      }
+      const q = await checkQuota(user.id, "intel")
+      if (!q.allowed) {
+        try { await db.subscription.update({ where: { userId: user.id }, data: { quotaUsed: 0, quotaResetAt: new Date(Date.now() + 30 * 86400000) } }) } catch {}
+      }
+      return user.id
+    } catch (e) {
+      // 数据库不可用时（如Neon休眠），返回虚拟dev用户ID，跳过所有DB操作
+      console.error("getUserId DB unreachable, using fake dev ID:", e)
+      return "dev-no-db"
     }
-    const q = await checkQuota(user.id, "intel")
-    if (!q.allowed) {
-      await db.subscription.update({ where: { userId: user.id }, data: { quotaUsed: 0, quotaResetAt: new Date(Date.now() + 30 * 86400000) } })
-    }
-    return user.id
   }
 
   // 生产环境：必须登录
@@ -98,6 +105,7 @@ export async function POST(req: NextRequest) {
     case "conversion":  return runTopics(req, userId, body, buildConversionTopicPrompt, buildConversionTopicUserMessage, "E2 转化选题")
     case "trust":       return runTopics(req, userId, body, buildTrustTopicPrompt, buildTrustTopicUserMessage, "E3 信任选题")
     case "positioning":       return runPositioning(req, userId, body)
+    case "c-content":        return runCContent(req, userId, body)
     case "retro":             return runRetro(req, userId, body)
     case "script":             return runScript(req, userId, body)
     case "regen-mode-a":      return runRegenerate(req, userId, body, "mode-a")
@@ -170,7 +178,7 @@ async function runTopics(
   if (!niche?.trim() || niche.trim().length < 2) return Response.json({ error: "请输入赛道" }, { status: 400 })
   const model = selectModel("topics")
   return sse(req, async (send) => {
-    send({ type: "status", phase: "topics", message: model === "deepseek-reasoner" ? "系统思考中，请稍候…" : `正在生成${label}... (${model})` })
+    send({ type: "status", phase: "topics", message: "正在分析赛道，生成选题中…" })
     const r = await streamGenerate(buildPrompt(), buildUser({ niche: niche.trim(), targetAudience, targetGap, dna: body.dna }), model, (t: string) => send({ type: "chunk", content: t }), req.signal)
     const cost = getCreditCost(body.mode || "mode-a").cost
     await deductCredits(userId, cost)
@@ -198,7 +206,7 @@ async function runTopics(
       })
     } catch (e) { console.error("保存再生状态失败:", e) }
 
-    send({ type: "done", usage: r.usage, model })
+    send({ type: "done" })
   })
 }
 
@@ -220,7 +228,7 @@ async function runRegenerate(req: NextRequest, userId: string, body: any, baseMo
   const model = selectModel("topics")
 
   return sse(req, async (send) => {
-    send({ type: "status", phase: "topics", message: `热再生中... (第${state.batchCount + 1}批) — ${model}` })
+    send({ type: "status", phase: "topics", message: "正在生成新一批选题…" })
 
     const userMsg = buildRegenUserMessage({
       niche: niche.trim(),
@@ -250,7 +258,7 @@ async function runRegenerate(req: NextRequest, userId: string, body: any, baseMo
       },
     })
 
-    send({ type: "done", usage: r.usage, model, regeneration: true, batchCount: state.batchCount + 1 })
+    send({ type: "done", regeneration: true, batchCount: state.batchCount + 1 })
   })
 }
 
@@ -283,7 +291,7 @@ async function runPositioning(req: NextRequest, userId: string, body: any) {
     )
     const posCost = getCreditCost("positioning").cost
     await deductCredits(userId, posCost)
-    send({ type: "done", usage: r.usage, model, cost: posCost })
+    send({ type: "done", usage: r.usage, cost: posCost })
   })
 }
 
@@ -311,23 +319,38 @@ async function runRetro(req: NextRequest, userId: string, body: any) {
     )
     const cost = getCreditCost("intel").cost
     await deductCredits(userId, cost)
-    send({ type: "done", usage: r.usage, model, cost })
+    send({ type: "done", usage: r.usage, cost })
+  })
+}
+
+// ─── 老C 内容推荐 ───────────────────────────────
+
+async function runCContent(req: NextRequest, userId: string, body: any) {
+  const { niche } = body  // niche field reused as user input text
+  if (!niche?.trim() || niche.trim().length < 10) return Response.json({ error: "请多写一点。至少10个字，告诉我你手边有什么、日常在做什么。" }, { status: 400 })
+  const model = selectModel("topics")
+  return sse(req, async (send) => {
+    send({ type: "status", phase: "c-content", message: "正在帮你看…" })
+    const r = await streamGenerate(buildCContentPrompt(), buildCContentUserMessage({ content: niche.trim() }), model, (t: string) => send({ type: "chunk", content: t }), req.signal)
+    const cost = getCreditCost("intel").cost
+    await deductCredits(userId, cost)
+    send({ type: "done" })
   })
 }
 
 // ─── Script (R1) ─────────────────────────────────
 
 async function runScript(req: NextRequest, userId: string, body: any) {
-  const { topic, contentType } = body
+  const { topic, contentType, dna } = body
   if (!topic?.trim()) return Response.json({ error: "请选择选题" }, { status: 400 })
   const model = selectModel("script")
   return sse(req, async (send) => {
-    send({ type: "status", phase: "script", message: `老E正在路由判定... (${model})` })
-    const r = await streamGenerate(buildScriptPrompt(), buildScriptUserMessage({ topic: topic.trim(), contentType }), model, (t: string) => send({ type: "chunk", content: t }), req.signal)
+    send({ type: "status", phase: "script", message: "正在分析选题，匹配叙事结构…" })
+    const r = await streamGenerate(buildScriptPrompt(), buildScriptUserMessage({ topic: topic.trim(), contentType, dna }), model, (t: string) => send({ type: "chunk", content: t }), req.signal)
     let outputJson = null; try { outputJson = parseScriptOutput(r.fullText) } catch {}
     const script = await db.script.create({ data: { userId, topic: topic.trim(), outputJson: (outputJson as any) || {}, outputMarkdown: r.fullText, emotionPath: outputJson?.emotionDesign?.path || null, tonePersona: outputJson?.emotionDesign?.tonePersona || null, chassisFormula: outputJson?.recognition?.chassisFormula || null, contentType: outputJson?.recognition?.contentType || null } })
     const scriptCost = getCreditCost("script").cost
     await deductCredits(userId, scriptCost)
-    send({ type: "done", scriptId: script.id, usage: r.usage, model, cost: scriptCost })
+    send({ type: "done", scriptId: script.id, usage: r.usage, cost: scriptCost })
   })
 }

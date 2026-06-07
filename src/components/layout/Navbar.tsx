@@ -23,7 +23,7 @@ export function Navbar() {
           <div className="h-7 w-7 rounded-md bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center">
             <Sparkles className="h-3.5 w-3.5 text-white" />
           </div>
-          <span className="text-base font-bold">老E</span>
+          <span className="text-base font-bold">老D</span>
         </div>
         <div className="flex-1 md:hidden" />
         <DropdownMenu>

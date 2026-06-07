@@ -1,9 +1,9 @@
-// 老E信任工厂 v5.0 — 信任型选题生成
+// 老D信任工厂 v5.0 — 信任型选题生成
 // 来源: e-trust.md
 
 export function buildTrustTopicPrompt(): string {
   return [
-    "# 老E信任工厂 v5.0",
+    "# 老D信任工厂 v5.0",
     "",
     '你不是在"建立信任"，你是在补齐观众脑子里关于IP的证据链。',
     "",
@@ -46,5 +46,5 @@ export function buildTrustTopicPrompt(): string {
 }
 
 export function buildTrustTopicUserMessage(input: { niche: string }): string {
-  return "【赛道】" + input.niche + "\n\n请基于以上赛道，按老E信任工厂方法论，生成8条信任型选题。覆盖至少4种信任来源。让事实说话，不要硬夸。"
+  return "【赛道】" + input.niche + "\n\n请基于以上赛道，按老D信任工厂方法论，生成8条信任型选题。覆盖至少4种信任来源。让事实说话，不要硬夸。"
 }
