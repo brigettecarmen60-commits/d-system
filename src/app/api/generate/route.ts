@@ -10,7 +10,7 @@ import { db } from "@/lib/db"
 // Prompt configs — user-editable
 import { buildIntelPrompt, buildIntelUserMessage } from "@/config/prompts/intel"
 import { buildModeAPrompt, buildModeAUserMessage } from "@/config/prompts/traffic-mode-a"
-import { buildModeBPrompt, buildModeBUserMessage } from "@/config/prompts/traffic-mode-b"
+import { buildModeBPrompt, buildModeBUserMessage, buildModeBAnalysisPrompt, buildModeBAnalysisUserMessage, buildModeBGenUserMessage } from "@/config/prompts/traffic-mode-b"
 import { buildCognitivePrompt, buildCognitiveUserMessage } from "@/config/prompts/cognitive"
 import { buildConversionTopicPrompt, buildConversionTopicUserMessage } from "@/config/prompts/conversion-topic"
 import { buildTrustTopicPrompt, buildTrustTopicUserMessage } from "@/config/prompts/trust-topic"
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
   switch (mode) {
     case "intel":       return runIntel(req, userId, body)
     case "mode-a":      return runTopics(req, userId, body, buildModeAPrompt, buildModeAUserMessage, "Mode A 纪实选题")
-    case "mode-b":      return runTopics(req, userId, body, buildModeBPrompt, buildModeBUserMessage, "Mode B 荒诞选题")
+    case "mode-b":      return runAbsurdTwoPass(req, userId, body)
     case "mode-n":      return runTopics(req, userId, body, buildCognitivePrompt, buildCognitiveUserMessage, "Gem1-N 认知选题")
     case "conversion":  return runTopics(req, userId, body, buildConversionTopicPrompt, buildConversionTopicUserMessage, "E2 转化选题")
     case "trust":       return runTopics(req, userId, body, buildTrustTopicPrompt, buildTrustTopicUserMessage, "E3 信任选题")
@@ -207,6 +207,60 @@ async function runTopics(
       })
     } catch (e) { console.error("保存再生状态失败:", e) }
 
+    send({ type: "done" })
+  })
+}
+
+// ─── 荒诞两阶段生成 ───────────────────────────
+
+async function runAbsurdTwoPass(req: NextRequest, userId: string, body: any) {
+  const { niche, dna } = body
+  if (!niche?.trim() || niche.trim().length < 2) return Response.json({ error: "请输入赛道" }, { status: 400 })
+
+  return sse(req, async (send) => {
+    // Pass 1: R1 分析
+    send({ type: "status", phase: "topics", message: "正在分析赛道，匹配桥段…" })
+    const analysisModel = selectModel("topics") // R1
+    const analysisResult = await streamGenerate(
+      buildModeBAnalysisPrompt(),
+      buildModeBAnalysisUserMessage({ niche: niche.trim() }),
+      analysisModel,
+      (t: string) => {},
+      req.signal
+    )
+
+    let analysisJson: string
+    try {
+      const jsonMatch = analysisResult.fullText.match(/```json\s*([\s\S]*?)```/)
+      const raw = jsonMatch ? jsonMatch[1] : analysisResult.fullText
+      JSON.parse(raw) // validate
+      analysisJson = raw
+    } catch {
+      analysisJson = analysisResult.fullText // pass raw if not valid JSON
+    }
+
+    // Save analysis for hot regeneration
+    try {
+      await db.generationState.upsert({
+        where: { userId_niche_mode: { userId, niche: niche.trim(), mode: "mode-b" } },
+        create: { userId, niche: niche.trim(), mode: "mode-b", lockedAnalysis: { analysisJson, niche: niche.trim() }, usedAngles: [], usedCodes: [], usedMolds: [] },
+        update: { lockedAnalysis: { analysisJson, niche: niche.trim() } },
+      })
+    } catch (e) { console.error("save analysis failed:", e) }
+
+    // Pass 2: V3 生成
+    send({ type: "status", phase: "topics", message: "正在生成荒诞选题…" })
+    const genModel = selectModel("mode-b") // V3
+    const genResult = await streamGenerate(
+      buildModeBPrompt(),
+      buildModeBGenUserMessage({ niche: niche.trim(), analysis: analysisJson }),
+      genModel,
+      (t: string) => send({ type: "chunk", content: t }),
+      req.signal
+    )
+
+    const cost = getCreditCost("mode-b").cost
+    await deductCredits(userId, cost)
     send({ type: "done" })
   })
 }
