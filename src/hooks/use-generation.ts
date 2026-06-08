@@ -137,7 +137,7 @@ export function useGeneration() {
       // 找标题：第一个不以 拍/停/站/怎么/为什么/桥段/桥段选择/换我/📋/🎬/💡 开头的有意义行
       let title = ""
       for (const line of lines) {
-        if (/^(拍|停|站|怎么拍|为什么有趣|为什么停|桥段选择|桥段|换我怎么办|立场)[：:]/.test(line)) continue
+        if (/^(拍|停|站|怎么拍|为什么有趣|为什么停|模板|桥段选择|桥段|换我怎么办|立场)[：:]/.test(line)) continue
         if (/^(📋|🎬|💡)/.test(line)) continue
         if (/^选题\s*\d/.test(line)) continue
         if (line.length >= 3) { title = line; break }
