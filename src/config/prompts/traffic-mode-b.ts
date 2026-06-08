@@ -46,11 +46,9 @@ export function buildModeBPrompt(): string {
     "",
     CHINESE_VOICE_RULES,
     "",
-    "## 🚫 禁止输出：物理清单、桥段决策过程、代码分析、\"⚠️\"标记、任何思考过程。只输出下面4条选题。",
-    "",
     "## 输出格式",
     "",
-    "先输出一段分析（这是你出题的依据，必须先写）：",
+    "分析段必须先写——这是你后面4条选题的依据：",
     "",
     "【物理原子】[列出5个赛道里最枯燥的具体物理东西]",
     "【选中桥段】[从上面37桥段里选2个编号+名称，每个写一句\"在这个赛道里意味着什么\"]",
@@ -78,6 +76,6 @@ export function buildModeBUserMessage(input: { niche: string; dna?: string }): s
   const parts = ["【赛道】" + input.niche]
   if (input.dna) { parts.push(""); parts.push("【DNA/定位】"); parts.push(input.dna) }
   parts.push("")
-  parts.push("脑内执行：列物理清单→挑原子→选桥段→读代码→缝合→出4条。只输出最终选题，不输出思考过程。")
+  parts.push("先输出【物理原子】+【选中桥段】分析段。然后基于你自己写的分析，出4条选题。分析段是你出题的依据，必须先写。")
   return parts.join("\n")
 }
