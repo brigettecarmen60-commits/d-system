@@ -4,6 +4,7 @@
 // 桥段库：37个（综艺27 + 真人秀10），审计后砍掉11个不适配短视频的
 
 import { CODE_LIBRARY } from "@/lib/llm/e-code-library"
+import { CHINESE_VOICE_RULES } from "@/lib/llm/chinese-voice-rules"
 
 export function buildModeBPrompt(): string {
   return [
@@ -42,6 +43,8 @@ export function buildModeBPrompt(): string {
     "",
     "## 61代码库",
     CODE_LIBRARY,
+    "",
+    CHINESE_VOICE_RULES,
     "",
     "## 🚫 禁止输出：物理清单、桥段决策过程、代码分析、\"⚠️\"标记、任何思考过程。只输出下面4条选题。",
     "",
