@@ -74,6 +74,6 @@ export function buildModeBUserMessage(input: { niche: string; dna?: string }): s
   const parts = ["【赛道】" + input.niche]
   if (input.dna) { parts.push(""); parts.push("【DNA/定位】"); parts.push(input.dna) }
   parts.push("")
-  parts.push("脑内执行：列物理清单→挑原子→选桥段→读代码→缝合→出4条。只输出最终选题，不输出思考过程。")
+  parts.push("必须严格按输出格式：每条选题第一行写\"桥段选择：#XX [名称]\"，然后写标题、怎么拍、为什么有趣、站、换我怎么办。桥段编号必须先于所有内容。不允许先写标题后补桥段。")
   return parts.join("\n")
 }
