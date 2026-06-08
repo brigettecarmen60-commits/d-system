@@ -70,14 +70,14 @@ export function extractCodesFromOutput(fullText: string): string[] {
 /**
  * 从AI输出中提取已用模具/拍摄方式
  *
- * 活跃 prompt 统一使用「怎么拍：[内容]」格式。
+ * 活跃 prompt 使用「拍：[内容]」或「怎么拍：[内容]」格式。
  * 兼容旧格式 🎬 拍摄形式： 作为 fallback。
  */
 export function extractMoldsFromOutput(fullText: string): string[] {
   const molds: string[] = []
 
-  // 主路径：活跃 prompt 格式 — 「怎么拍：xxx」
-  const activeRegex = /怎么拍[：:]\s*(.+)/g
+  // 主路径：活跃 prompt 格式 — 「拍：xxx」或「怎么拍：xxx」
+  const activeRegex = /(?:怎么拍|拍)[：:]\s*(.+)/g
   let match
   while ((match = activeRegex.exec(fullText)) !== null) {
     const mold = match[1].trim().split(/[·,，]/)[0].trim()
@@ -139,7 +139,7 @@ export function buildRegenUserMessage(params: RegenParams): string {
     parts.push("")
   }
 
-  parts.push(`当前是第 ${params.batchCount + 1} 批。请产出4条全新的选题，不得与已用选题重复或变相重复。`)
+  parts.push(`当前是第 ${params.batchCount + 1} 批。请产出6条全新的选题，不得与已用选题重复或变相重复。`)
 
   return parts.join("\n")
 }
