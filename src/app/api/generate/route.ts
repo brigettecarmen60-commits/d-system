@@ -248,9 +248,9 @@ async function runAbsurdTwoPass(req: NextRequest, userId: string, body: any) {
       })
     } catch (e) { console.error("save analysis failed:", e) }
 
-    // Pass 2: V3 生成
+    // Pass 2: R1 生成
     send({ type: "status", phase: "topics", message: "正在生成荒诞选题…" })
-    const genModel = selectModel("mode-b") // V3
+    const genModel = selectModel("topics") // R1
     const genResult = await streamGenerate(
       buildModeBPrompt(),
       buildModeBGenUserMessage({ niche: niche.trim(), analysis: analysisJson }),

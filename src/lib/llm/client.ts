@@ -66,6 +66,5 @@ export async function streamGenerate(
 // - "topics" / "script" mode → R1 (deep reasoning, creative generation)
 export function selectModel(mode: string): Model {
   if (mode === "intel") return "deepseek-chat"
-  if (mode === "mode-b") return "deepseek-chat"  // 荒诞用V3——R1太保守
   return "deepseek-reasoner"
 }
