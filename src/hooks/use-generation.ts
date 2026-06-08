@@ -107,6 +107,10 @@ export function useGeneration() {
     await streamFetch({ mode: "retro", ...input })
   }, [streamFetch])
 
+  const runAccountRetro = useCallback(async (input: Record<string, string>) => {
+    await streamFetch({ mode: "account-retro", ...input })
+  }, [streamFetch])
+
   const runPositioning = useCallback(async (niche: string, personalInfo: string) => {
     await streamFetch({ mode: "positioning", niche: niche.trim(), personalInfo })
   }, [streamFetch])
@@ -171,6 +175,6 @@ export function useGeneration() {
 
   return { phase, statusMessage, rawText, output, scriptId, tokens, usedModel, error, lastMode,
     isRegeneration, regenState,
-    runIntel, runTopics, runPositioning, runScript, runRetro, reset, parseTopics,
+    runIntel, runTopics, runPositioning, runScript, runRetro, runAccountRetro, reset, parseTopics,
     checkRegenState, runRegenerate, runColdRestart }
 }

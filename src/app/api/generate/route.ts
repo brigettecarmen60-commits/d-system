@@ -17,7 +17,7 @@ import { buildTrustTopicPrompt, buildTrustTopicUserMessage } from "@/config/prom
 import { buildScriptPrompt, buildScriptUserMessage } from "@/config/prompts/script"
 import { buildPositioningPrompt, buildPositioningUserMessage } from "@/config/prompts/positioning"
 import { buildCContentPrompt, buildCContentUserMessage } from "@/config/prompts/c-content"
-import { buildRetroPrompt, buildRetroUserMessage } from "@/config/prompts/retro"
+import { buildRetroPrompt, buildRetroUserMessage, buildAccountRetroPrompt, buildAccountRetroUserMessage } from "@/config/prompts/retro"
 import {
   extractAnglesFromOutput,
   extractCodesFromOutput,
@@ -107,6 +107,7 @@ export async function POST(req: NextRequest) {
     case "positioning":       return runPositioning(req, userId, body)
     case "c-content":        return runCContent(req, userId, body)
     case "retro":             return runRetro(req, userId, body)
+    case "account-retro":     return runAccountRetro(req, userId, body)
     case "script":             return runScript(req, userId, body)
     case "regen-mode-a":      return runRegenerate(req, userId, body, "mode-a")
     case "regen-mode-b":      return runRegenerate(req, userId, body, "mode-b")
@@ -307,12 +308,34 @@ async function runRetro(req: NextRequest, userId: string, body: any) {
       buildRetroPrompt(),
       buildRetroUserMessage({
         topic: topic.trim(),
+        purpose: body.purpose || "",
         publishDate: body.publishDate,
         platform: body.platform,
         performance: body.performance,
         conversion: body.conversion,
         comments: body.comments,
       }),
+      model,
+      (t: string) => send({ type: "chunk", content: t }),
+      req.signal
+    )
+    const cost = getCreditCost("intel").cost
+    await deductCredits(userId, cost)
+    send({ type: "done", usage: r.usage, cost })
+  })
+}
+
+// ─── 账号体检 Plan B ──────────────────────────
+
+async function runAccountRetro(req: NextRequest, userId: string, body: any) {
+  const { purpose, recent10, best, worst } = body
+  if (!purpose?.trim() || !recent10?.trim()) return Response.json({ error: "请填写账号目的和近期数据" }, { status: 400 })
+  const model = selectModel("intel")
+  return sse(req, async (send) => {
+    send({ type: "status", phase: "retro", message: "正在对比分析…" })
+    const r = await streamGenerate(
+      buildAccountRetroPrompt(),
+      buildAccountRetroUserMessage({ purpose: purpose.trim(), recent10: recent10.trim(), best: best?.trim() || "", worst: worst?.trim() || "" }),
       model,
       (t: string) => send({ type: "chunk", content: t }),
       req.signal

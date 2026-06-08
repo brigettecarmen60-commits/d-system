@@ -13,15 +13,43 @@ interface RegenParams {
 
 /**
  * 从AI输出中提取已用选题角度（提取标题行）
+ *
+ * 活跃 prompt 的输出格式：标题是 ━━━ 分隔符后的第一行纯文本，不含冒号、不含前缀标记。
+ * 兼容旧格式 📋 标题： 作为 fallback。
  */
 export function extractAnglesFromOutput(fullText: string): string[] {
   const angles: string[] = []
-  const titleRegex = /📋\s*标题[：:]\s*(.+)/g
-  let match
-  while ((match = titleRegex.exec(fullText)) !== null) {
-    const title = match[1].trim()
-    if (title && title.length > 3) angles.push(title)
+
+  // 主路径：活跃 prompt 格式 — 标题是 ━━━ 分隔块的第一行无标记纯文本
+  const blocks = fullText.split(/━━━\s*(?:选题|转化选题|信任选题)\s*\d*\s*━━━/)
+  for (let i = 1; i < blocks.length; i++) {
+    const firstLine = blocks[i]
+      .split("\n")
+      .map((l) => l.trim())
+      .find(
+        (l) =>
+          l.length >= 3 &&
+          l.length <= 60 &&
+          !/[：:]/.test(l) &&            // 不含冒号（排除标签行如"怎么拍：..."）
+          !l.startsWith("[") &&           // 不是模板占位符
+          !l.startsWith("🎰") &&
+          !l.startsWith("🎬") &&
+          !l.startsWith("📋") &&
+          !l.startsWith("━━━")           // 不是分隔符
+      )
+    if (firstLine) angles.push(firstLine)
   }
+
+  // Fallback：旧格式 📋 标题：xxx（兼容遗留 prompt 输出）
+  if (angles.length === 0) {
+    const titleRegex = /📋\s*标题[：:]\s*(.+)/g
+    let match
+    while ((match = titleRegex.exec(fullText)) !== null) {
+      const title = match[1].trim()
+      if (title && title.length > 3) angles.push(title)
+    }
+  }
+
   return angles
 }
 
@@ -41,15 +69,30 @@ export function extractCodesFromOutput(fullText: string): string[] {
 
 /**
  * 从AI输出中提取已用模具/拍摄方式
+ *
+ * 活跃 prompt 统一使用「怎么拍：[内容]」格式。
+ * 兼容旧格式 🎬 拍摄形式： 作为 fallback。
  */
 export function extractMoldsFromOutput(fullText: string): string[] {
   const molds: string[] = []
-  const moldRegex = /🎬\s*拍摄形式[：:]\s*(.+)/g
+
+  // 主路径：活跃 prompt 格式 — 「怎么拍：xxx」
+  const activeRegex = /怎么拍[：:]\s*(.+)/g
   let match
-  while ((match = moldRegex.exec(fullText)) !== null) {
+  while ((match = activeRegex.exec(fullText)) !== null) {
     const mold = match[1].trim().split(/[·,，]/)[0].trim()
-    if (mold && mold.length > 2) molds.push(mold)
+    if (mold && mold.length > 2 && !molds.includes(mold)) molds.push(mold)
   }
+
+  // Fallback：旧格式 🎬 拍摄形式：xxx
+  if (molds.length === 0) {
+    const oldRegex = /🎬\s*拍摄形式[：:]\s*(.+)/g
+    while ((match = oldRegex.exec(fullText)) !== null) {
+      const mold = match[1].trim().split(/[·,，]/)[0].trim()
+      if (mold && mold.length > 2) molds.push(mold)
+    }
+  }
+
   return molds
 }
 
