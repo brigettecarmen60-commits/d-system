@@ -137,7 +137,7 @@ export function useGeneration() {
       // 找标题：跳过分析段标记和所有字段标签
       let title = ""
       for (const line of lines) {
-        if (/^(拍什么|拍|停|站|怎么拍|为什么有趣|为什么停|具体是这样|规则|模板|桥段选择|桥段|换我怎么办|立场|谁被卷入|选A的后果|选B的后果|自检)[：:]/.test(line)) continue
+        if (/^(拍什么|拍|停|站|怎么拍|为什么有趣|为什么停|具体是这样|规则|证据|模板|桥段选择|桥段|换我怎么办|立场|谁被卷入|选A的后果|选B的后果|自检)[：:]/.test(line)) continue
         if (/^(📋|🎬|💡)/.test(line)) continue
         if (/^【[^】]+】/.test(line)) continue  // 跳过【物理原子】【选中桥段】等分析段
         if (/^选题\s*\d/.test(line)) continue
