@@ -51,11 +51,6 @@ export default function RetroPage() {
     <div className="mx-auto max-w-4xl space-y-6">
       <h1 className="text-2xl font-bold flex items-center gap-2"><BarChart3 className="h-6 w-6 text-emerald-500" />内容复盘</h1>
 
-      {tokens && phase === "complete" && (
-        <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-          <Coins className="h-3.5 w-3.5" />{tokens.totalTokens.toLocaleString()} tokens
-        </div>
-      )}
 
       {phase === "idle" && (
         <Tabs value={activeTab} onValueChange={setActiveTab}>

@@ -20,11 +20,6 @@ export default function ScriptPage() {
       <h1 className="text-2xl font-bold flex items-center gap-2"><PenLine className="h-6 w-6 text-primary" />写脚本</h1>
       <p className="text-muted-foreground">输入选题，老D 自动判定类型→to who→叙事结构→管线执行。</p>
 
-      {tokens && phase === "complete" && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground justify-end">
-          <Coins className="h-3.5 w-3.5" />{tokens.totalTokens.toLocaleString()} tokens
-        </div>
-      )}
 
       {phase === "idle" && (
         <Card className="glass border-0 shadow-sm">

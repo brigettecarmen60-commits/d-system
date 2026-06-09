@@ -1,5 +1,24 @@
 @import "tailwindcss";
 
+/* 手机端适配 */
+@media (max-width: 768px) {
+  body {
+    -webkit-text-size-adjust: 100%;
+  }
+  .glass {
+    background: white !important;
+    backdrop-filter: none !important;
+  }
+  pre, code {
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+    font-size: 0.75rem !important;
+  }
+  h1 { font-size: 1.25rem !important; }
+  h2 { font-size: 1.1rem !important; }
+  h3 { font-size: 0.95rem !important; }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

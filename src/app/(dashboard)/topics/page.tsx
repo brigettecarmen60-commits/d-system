@@ -152,7 +152,6 @@ export default function TopicsPage() {
                 <Button onClick={handleRegenerate} className="bg-amber-500 hover:bg-amber-600 text-white">
                   <Zap className="h-4 w-4 mr-2" />热再生（换一批）
                 </Button>
-                <span className="text-xs text-muted-foreground">已生成 {regenState.batchCount} 批 · 预计节省 ~{regenState.estimatedSaving}% token</span>
                 <Button variant="ghost" size="sm" onClick={() => runColdRestart(niche, activeMode)}><RotateCcw className="h-3.5 w-3.5 mr-1" />重新分析</Button>
               </>
             ) : (
