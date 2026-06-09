@@ -70,7 +70,10 @@ function sse(req: NextRequest, fn: (send: (d: object) => void) => Promise<void>)
   const stream = new ReadableStream({
     async start(ctrl) {
       const send = (d: object) => { if (closed) return; try { ctrl.enqueue(encoder.encode(`data: ${JSON.stringify(d)}\n\n`)) } catch { closed = true } }
-      try { await fn(send); ctrl.close() } catch (e: any) {
+      // 心跳：每15秒发一个ping，防止手机断连
+      const heartbeat = setInterval(() => { if (!closed) send({ type: "ping" }) }, 15000)
+      try { await fn(send); clearInterval(heartbeat); ctrl.close() } catch (e: any) {
+        clearInterval(heartbeat)
         if (e?.name === "AbortError" || req.signal.aborted) send({ type: "error", message: "已取消" })
         else { console.error(e); send({ type: "error", message: e.message || "生成失败" }) }
         ctrl.close()

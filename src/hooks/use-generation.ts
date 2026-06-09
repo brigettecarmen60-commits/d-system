@@ -48,6 +48,7 @@ export function useGeneration() {
           try {
             const ev = JSON.parse(line.slice(6))
             switch (ev.type) {
+              case "ping": break // 心跳，忽略
               case "status": setStatusMessage(ev.message); break
               case "chunk": acc += ev.content || ""; setRawText(acc); break
               case "done":
