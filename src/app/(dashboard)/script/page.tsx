@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useGeneration } from "@/hooks/use-generation"
-import { PenLine, Loader2, Copy, RotateCcw, Check, FileText, Target, Zap, ShieldCheck, MessageSquare, Eye, Coins, Sparkles } from "lucide-react"
+import { PenLine, Loader2, Copy, RotateCcw, Sparkles } from "lucide-react"
 
 export default function ScriptPage() {
   const [topic, setTopic] = useState("")
@@ -73,13 +73,11 @@ export default function ScriptPage() {
 
       {phase === "complete" && rawText && (
         <div className="space-y-5">
-          {output?.scriptBody?.opening?.audio ? <ScriptCards output={output} /> : (
-            <Card className="border border-gray-100 shadow-none">
-              <CardContent className="p-6">
-                <pre className="text-sm whitespace-pre-wrap font-sans leading-relaxed">{rawText}</pre>
-              </CardContent>
-            </Card>
-          )}
+          <Card className="border border-gray-100 shadow-none">
+            <CardContent className="p-6">
+              <pre className="text-sm whitespace-pre-wrap font-sans leading-relaxed">{rawText}</pre>
+            </CardContent>
+          </Card>
           <div className="flex gap-3">
             <Button onClick={reset} variant="outline" className="smooth"><RotateCcw className="h-4 w-4 mr-2" />新脚本</Button>
             <Button variant="outline" className="smooth" onClick={() => navigator.clipboard.writeText(rawText)}><Copy className="h-4 w-4 mr-2" />复制全文</Button>
