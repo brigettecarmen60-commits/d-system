@@ -14,13 +14,16 @@
     white-space: pre-wrap !important;
     word-break: break-all !important;
     font-size: 0.75rem !important;
-    color: #1a1a1a !important;
+    color: #000 !important;
   }
   h1 { font-size: 1.25rem !important; color: #000 !important; }
   h2 { font-size: 1.1rem !important; color: #000 !important; }
-  h3 { font-size: 0.95rem !important; color: #111 !important; }
-  p, span, li, td, th, label, .text-sm, .text-xs { color: #1a1a1a !important; }
-  .text-muted-foreground { color: #555 !important; }
+  h3 { font-size: 0.95rem !important; color: #000 !important; font-weight: 600 !important; }
+  p, span, li, td, th, label, .text-sm, .text-xs { color: #000 !important; }
+  .text-muted-foreground { color: #444 !important; }
+  /* tabs横向排列 */
+  .w-full.flex-wrap { flex-wrap: nowrap !important; overflow-x: auto; }
+  .w-full.flex-wrap > * { flex-shrink: 0; white-space: nowrap; }
 }
 
 @theme inline {
