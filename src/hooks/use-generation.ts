@@ -54,8 +54,8 @@ export function useGeneration() {
               case "done":
                 setTokens(ev.usage || null); setUsedModel(ev.model || ""); setScriptId(ev.scriptId || null)
                 setPhase("complete"); setStatusMessage("完成")
-                if (ev.scriptId && body.mode === "script") {
-                  try { const { parseScriptOutput } = await import("@/lib/llm/parser"); setOutput(parseScriptOutput(acc)) } catch {}
+                if (body.mode === "script") {
+                  try { const { parseScriptOutput } = await import("@/lib/llm/parser"); const parsed = parseScriptOutput(acc); setOutput(parsed) } catch { setOutput(null as any) }
                 }
                 break
               case "error": throw new Error(ev.message)

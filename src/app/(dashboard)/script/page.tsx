@@ -71,9 +71,15 @@ export default function ScriptPage() {
         </Card>
       )}
 
-      {phase === "complete" && output && (
+      {phase === "complete" && rawText && (
         <div className="space-y-5">
-          <ScriptCards output={output} />
+          {output?.scriptBody?.opening?.audio ? <ScriptCards output={output} /> : (
+            <Card className="border border-gray-100 shadow-none">
+              <CardContent className="p-6">
+                <pre className="text-sm whitespace-pre-wrap font-sans leading-relaxed">{rawText}</pre>
+              </CardContent>
+            </Card>
+          )}
           <div className="flex gap-3">
             <Button onClick={reset} variant="outline" className="smooth"><RotateCcw className="h-4 w-4 mr-2" />新脚本</Button>
             <Button variant="outline" className="smooth" onClick={() => navigator.clipboard.writeText(rawText)}><Copy className="h-4 w-4 mr-2" />复制全文</Button>
