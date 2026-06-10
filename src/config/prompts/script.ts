@@ -158,6 +158,53 @@ export function buildScriptPrompt(): string {
   ].join("\n")
 }
 
+// ─── 两阶段：Pass 1 路由分析（R1）─────────────────────────
+
+export function buildScriptRoutingPrompt(): string {
+  return [
+    "# 脚本路由判定",
+    "",
+    "你的任务只有一件：分析选题，输出路由决策。不写脚本。",
+    "",
+    "## 需要判断的维度",
+    "",
+    "1. 类型判定：框架驱动（内容不可预知，输出拍摄框架）还是文案驱动（可逐字设计，输出完整脚本）？",
+    "2. to who：受众在哪个意识层级？Unaware/Problem-aware/Solution-aware/Product-aware/Most aware？",
+    "3. 叙事结构：10选1。流量型(6)：预期违背/认知对撞/阵营对立/信息缺口/悬疑盒子/A/B对照实验。转化型(4)：P.A.S./F.A.B.利益/风险逆转/过程透明。信任型=转化型去掉CTA。",
+    "4. 情绪路径：情绪A→B。认知颠覆/身份共鸣/正义审判/命运反转/窥探满足/温暖治愈。",
+    "5. 语气人格：快嘴犀利型/沉稳狠人型/深夜聊天型/解说拆解型。",
+    "6. 关系：我在跟谁说话？用什么关系？",
+    "7. 时长建议：观点30-90s/拆解1-3min/故事1-3min。",
+    "",
+    "## 输出JSON",
+    "```json",
+    "{",
+    '  "type": "文案驱动",',
+    '  "toWho": "Problem-aware",',
+    '  "narrativeStructure": "认知颠覆",',
+    '  "emotionPath": "确信→怀疑→恍然",',
+    '  "tone": "深夜聊天型",',
+    '  "relationship": "一个踩过坑的老会计跟同行交底",',
+    '  "duration": "1-2min"',
+    "}",
+    "```",
+  ].join("\n")
+}
+
+export function buildScriptRoutingUserMessage(input: { topic: string }): string {
+  return "【选题】" + input.topic + "\n\n只输出JSON路由决策。不写脚本。"
+}
+
+export function buildScriptGenUserMessage(input: { topic: string; routing: string; dna?: string; contentType?: string }): string {
+  const parts = ["【选题】" + input.topic]
+  parts.push(""); parts.push("【路由决策】"); parts.push(input.routing)
+  if (input.dna) { parts.push(""); parts.push("【DNA】"); parts.push(input.dna) }
+  if (input.contentType && input.contentType !== "auto") parts.push("【目的】" + input.contentType)
+  parts.push("")
+  parts.push("根据路由决策写脚本。开头激活六种认知异常之一。遵守0-1s Visual→1-2s Audio→2-3s钩住。转化型中段≥2个数字+1个诚实时刻。结尾闭环禁引评论。写完过AI腔扫描+呼吸检查。只输出🎬+🎙️脚本正文。")
+  return parts.join("\n")
+}
+
 export function buildScriptUserMessage(input: { topic: string; contentType?: string; dna?: string }): string {
   const parts = ["【选题】" + input.topic]
   if (input.dna) {

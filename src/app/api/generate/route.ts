@@ -14,7 +14,7 @@ import { buildModeBPrompt, buildModeBUserMessage } from "@/config/prompts/traffi
 import { buildCognitivePrompt, buildCognitiveUserMessage } from "@/config/prompts/cognitive"
 import { buildConversionTopicPrompt, buildConversionTopicUserMessage } from "@/config/prompts/conversion-topic"
 import { buildTrustTopicPrompt, buildTrustTopicUserMessage } from "@/config/prompts/trust-topic"
-import { buildScriptPrompt, buildScriptUserMessage } from "@/config/prompts/script"
+import { buildScriptPrompt, buildScriptUserMessage, buildScriptRoutingPrompt, buildScriptRoutingUserMessage, buildScriptGenUserMessage } from "@/config/prompts/script"
 import { buildPositioningPrompt, buildPositioningUserMessage } from "@/config/prompts/positioning"
 import { buildCContentPrompt, buildCContentUserMessage } from "@/config/prompts/c-content"
 import { buildRetroPrompt, buildRetroUserMessage, buildAccountRetroPrompt, buildAccountRetroUserMessage } from "@/config/prompts/retro"
@@ -369,18 +369,35 @@ async function runCContent(req: NextRequest, userId: string, body: any) {
 async function runScript(req: NextRequest, userId: string, body: any) {
   const { topic, contentType, dna } = body
   if (!topic?.trim()) return Response.json({ error: "请选择选题" }, { status: 400 })
-  const model = selectModel("intel") // V3——脚本太长R1超时
   return sse(req, async (send) => {
-    send({ type: "status", phase: "script", message: "正在分析选题，匹配叙事结构…" })
-    const r = await streamGenerate(buildScriptPrompt(), buildScriptUserMessage({ topic: topic.trim(), contentType, dna }), model, (t: string) => send({ type: "chunk", content: t }), req.signal)
-    let outputJson = null; try { outputJson = parseScriptOutput(r.fullText) } catch {}
-    let scriptId: string | null = null
-    try {
-      const script = await db.script.create({ data: { userId, topic: topic.trim(), outputJson: (outputJson as any) || {}, outputMarkdown: r.fullText, emotionPath: outputJson?.emotionDesign?.path || null, tonePersona: outputJson?.emotionDesign?.tonePersona || null, chassisFormula: outputJson?.recognition?.chassisFormula || null, contentType: outputJson?.recognition?.contentType || null } })
-      scriptId = script.id
-    } catch (e) { console.error("save script failed:", e) }
+    // Pass 1: R1 路由判定
+    send({ type: "status", phase: "script", message: "正在分析选题，判定路由…" })
+    const routingModel = selectModel("topics") // R1
+    const routingResult = await streamGenerate(
+      buildScriptRoutingPrompt(),
+      buildScriptRoutingUserMessage({ topic: topic.trim() }),
+      routingModel,
+      () => {},
+      req.signal
+    )
+    let routingJson = routingResult.fullText
+    try { JSON.parse(routingJson.match(/```json\s*([\s\S]*?)```/)?.[1] || routingJson) } catch {
+      routingJson = JSON.stringify({ type: "文案驱动", toWho: "Problem-aware", narrativeStructure: "认知颠覆", emotionPath: "确信→怀疑→恍然", tone: "深夜聊天型", relationship: "朋友交底", duration: "1-2min" })
+    }
+
+    // Pass 2: V3 写脚本
+    send({ type: "status", phase: "script", message: "正在写脚本…" })
+    const genModel = selectModel("intel") // V3
+    const r = await streamGenerate(
+      buildScriptPrompt(),
+      buildScriptGenUserMessage({ topic: topic.trim(), routing: routingJson, contentType, dna }),
+      genModel,
+      (t: string) => send({ type: "chunk", content: t }),
+      req.signal
+    )
+
     const scriptCost = getCreditCost("script").cost
     await deductCredits(userId, scriptCost)
-    send({ type: "done", scriptId, usage: r.usage, cost: scriptCost })
+    send({ type: "done", usage: r.usage, cost: scriptCost })
   })
 }
