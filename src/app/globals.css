@@ -4,6 +4,7 @@
 @media (max-width: 768px) {
   body {
     -webkit-text-size-adjust: 100%;
+    color: #1a1a1a !important;
   }
   .glass {
     background: white !important;
@@ -13,10 +14,13 @@
     white-space: pre-wrap !important;
     word-break: break-all !important;
     font-size: 0.75rem !important;
+    color: #1a1a1a !important;
   }
-  h1 { font-size: 1.25rem !important; }
-  h2 { font-size: 1.1rem !important; }
-  h3 { font-size: 0.95rem !important; }
+  h1 { font-size: 1.25rem !important; color: #000 !important; }
+  h2 { font-size: 1.1rem !important; color: #000 !important; }
+  h3 { font-size: 0.95rem !important; color: #111 !important; }
+  p, span, li, td, th, label, .text-sm, .text-xs { color: #1a1a1a !important; }
+  .text-muted-foreground { color: #555 !important; }
 }
 
 @theme inline {
