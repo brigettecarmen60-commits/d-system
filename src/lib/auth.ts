@@ -27,18 +27,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const adminPassword = process.env.ADMIN_PASSWORD
         const isDev = process.env.NODE_ENV !== "production"
 
-        // 管理员登录
+        // 管理员登录（DB容错——挂了也能登）
         if (adminEmail && adminPassword && email === adminEmail && password === adminPassword) {
-          let user = await db.user.findUnique({ where: { email } })
-          if (!user) user = await db.user.create({ data: { email, name: "管理员" } })
-          const sub = await db.subscription.findUnique({ where: { userId: user.id } })
-          if (!sub) {
-            await db.subscription.create({
-              data: { userId: user.id, plan: "FREE", monthlyQuota: 9999, quotaUsed: 0,
-                quotaResetAt: new Date(Date.now() + 365 * 86400000) },
-            })
+          try {
+            let user = await db.user.findUnique({ where: { email } })
+            if (!user) user = await db.user.create({ data: { email, name: "管理员" } })
+            const sub = await db.subscription.findUnique({ where: { userId: user.id } })
+            if (!sub) {
+              await db.subscription.create({
+                data: { userId: user.id, plan: "FREE", monthlyQuota: 9999, quotaUsed: 0,
+                  quotaResetAt: new Date(Date.now() + 365 * 86400000) },
+              })
+            }
+            return { id: user.id, email: user.email!, name: user.name }
+          } catch {
+            // DB挂了也放行
+            return { id: "admin", email, name: "管理员" }
           }
-          return { id: user.id, email: user.email!, name: user.name }
         }
 
         // 开发模式：无需密码

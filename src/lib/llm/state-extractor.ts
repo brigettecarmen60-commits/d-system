@@ -21,7 +21,8 @@ export function extractAnglesFromOutput(fullText: string): string[] {
   const angles: string[] = []
 
   // 主路径：活跃 prompt 格式 — 标题是 ━━━ 分隔块的第一行无标记纯文本
-  const blocks = fullText.split(/━━━\s*(?:选题|转化选题|信任选题)\s*\d*\s*━━━/)
+  // 适配 纪实/共识/转化/信任/荒诞 五种分隔符
+  const blocks = fullText.split(/━━━\s*(?:选题|转化选题|信任选题)\s*\d+\s*━━━(?:\s*荒诞)?/)
   for (let i = 1; i < blocks.length; i++) {
     const firstLine = blocks[i]
       .split("\n")
