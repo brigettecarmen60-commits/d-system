@@ -369,7 +369,7 @@ async function runCContent(req: NextRequest, userId: string, body: any) {
 async function runScript(req: NextRequest, userId: string, body: any) {
   const { topic, contentType, dna } = body
   if (!topic?.trim()) return Response.json({ error: "请选择选题" }, { status: 400 })
-  const model = selectModel("script")
+  const model = selectModel("intel") // V3——脚本太长R1超时
   return sse(req, async (send) => {
     send({ type: "status", phase: "script", message: "正在分析选题，匹配叙事结构…" })
     const r = await streamGenerate(buildScriptPrompt(), buildScriptUserMessage({ topic: topic.trim(), contentType, dna }), model, (t: string) => send({ type: "chunk", content: t }), req.signal)
