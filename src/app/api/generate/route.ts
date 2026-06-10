@@ -374,9 +374,13 @@ async function runScript(req: NextRequest, userId: string, body: any) {
     send({ type: "status", phase: "script", message: "正在分析选题，匹配叙事结构…" })
     const r = await streamGenerate(buildScriptPrompt(), buildScriptUserMessage({ topic: topic.trim(), contentType, dna }), model, (t: string) => send({ type: "chunk", content: t }), req.signal)
     let outputJson = null; try { outputJson = parseScriptOutput(r.fullText) } catch {}
-    const script = await db.script.create({ data: { userId, topic: topic.trim(), outputJson: (outputJson as any) || {}, outputMarkdown: r.fullText, emotionPath: outputJson?.emotionDesign?.path || null, tonePersona: outputJson?.emotionDesign?.tonePersona || null, chassisFormula: outputJson?.recognition?.chassisFormula || null, contentType: outputJson?.recognition?.contentType || null } })
+    let scriptId: string | null = null
+    try {
+      const script = await db.script.create({ data: { userId, topic: topic.trim(), outputJson: (outputJson as any) || {}, outputMarkdown: r.fullText, emotionPath: outputJson?.emotionDesign?.path || null, tonePersona: outputJson?.emotionDesign?.tonePersona || null, chassisFormula: outputJson?.recognition?.chassisFormula || null, contentType: outputJson?.recognition?.contentType || null } })
+      scriptId = script.id
+    } catch (e) { console.error("save script failed:", e) }
     const scriptCost = getCreditCost("script").cost
     await deductCredits(userId, scriptCost)
-    send({ type: "done", scriptId: script.id, usage: r.usage, cost: scriptCost })
+    send({ type: "done", scriptId, usage: r.usage, cost: scriptCost })
   })
 }
