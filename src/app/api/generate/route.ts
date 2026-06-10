@@ -210,6 +210,11 @@ async function runTopics(
       })
     } catch (e) { console.error("保存再生状态失败:", e) }
 
+    // 保存到Topic表（管理后台可查看）
+    try {
+      await db.topic.create({ data: { userId, niche: niche.trim(), mode: body.mode || "mode-a", content: r.fullText } })
+    } catch (e) { console.error("保存选题失败:", e) }
+
     send({ type: "done" })
   })
 }

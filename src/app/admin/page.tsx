@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Key, Users, Copy, Check, Plus, Trash2, ClipboardList } from "lucide-react"
+import { Key, Users, Copy, Check, Plus, Trash2, ClipboardList, FileText } from "lucide-react"
 
 export default function AdminPage() {
   return (
@@ -17,6 +17,7 @@ export default function AdminPage() {
           <TabsTrigger value="invite-codes"><Key className="h-4 w-4 mr-1" />邀请码</TabsTrigger>
           <TabsTrigger value="users"><Users className="h-4 w-4 mr-1" />用户管理</TabsTrigger>
           <TabsTrigger value="waitlist"><ClipboardList className="h-4 w-4 mr-1" />登记列表</TabsTrigger>
+          <TabsTrigger value="content"><FileText className="h-4 w-4 mr-1" />内容浏览</TabsTrigger>
         </TabsList>
         <TabsContent value="invite-codes" className="mt-4">
           <InviteCodePanel />
@@ -26,6 +27,9 @@ export default function AdminPage() {
         </TabsContent>
         <TabsContent value="waitlist" className="mt-4">
           <WaitlistPanel />
+        </TabsContent>
+        <TabsContent value="content" className="mt-4">
+          <ContentPanel />
         </TabsContent>
       </Tabs>
     </div>
@@ -249,6 +253,69 @@ function WaitlistPanel() {
                 <Badge variant={e.hasSubscription ? "default" : "outline"}>
                   {e.hasSubscription ? "已激活" : "待发码"}
                 </Badge>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+// ─── 内容浏览 ───
+function ContentPanel() {
+  const [tab, setTab] = useState<"topics" | "scripts">("topics")
+  const [items, setItems] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  async function load(type: "topics" | "scripts") {
+    setLoading(true)
+    setTab(type)
+    const res = await fetch(`/api/admin/content?type=${type}&limit=50`)
+    if (res.ok) {
+      const data = await res.json()
+      setItems(type === "topics" ? data.topics || [] : data.scripts || [])
+    }
+    setLoading(false)
+  }
+
+  useEffect(() => { load("topics") }, [])
+
+  const modeMap: Record<string, string> = {
+    "mode-a": "纪实", "mode-b": "荒诞", "mode-n": "共识",
+    "conversion": "转化", "trust": "信任",
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center justify-between">
+          <div className="flex gap-2">
+            <Button variant={tab === "topics" ? "default" : "outline"} size="sm" onClick={() => load("topics")}>选题</Button>
+            <Button variant={tab === "scripts" ? "default" : "outline"} size="sm" onClick={() => load("scripts")}>脚本</Button>
+          </div>
+          <span className="text-sm text-muted-foreground">{items.length} 条</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <p className="text-sm text-muted-foreground text-center py-8">加载中...</p>
+        ) : items.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-8">暂无内容</p>
+        ) : (
+          <div className="space-y-3 max-h-[600px] overflow-y-auto">
+            {items.map((item: any, i: number) => (
+              <div key={item.id || i} className="border rounded-lg p-3 text-sm">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-medium truncate max-w-[200px]">{item.email}</span>
+                  <div className="flex gap-1 shrink-0">
+                    {tab === "topics" && <Badge variant="secondary" className="text-xs">{modeMap[item.mode] || item.mode}</Badge>}
+                    <span className="text-xs text-muted-foreground">{new Date(item.createdAt).toLocaleDateString("zh-CN")}</span>
+                  </div>
+                </div>
+                {tab === "topics" && <p className="text-xs text-muted-foreground mb-1">赛道：{item.niche}</p>}
+                {tab === "scripts" && <p className="text-xs text-muted-foreground mb-1">选题：{item.topic}</p>}
+                <pre className="text-xs whitespace-pre-wrap font-sans bg-muted/30 rounded p-2 mt-1 max-h-32 overflow-y-auto">{item.content}</pre>
               </div>
             ))}
           </div>
