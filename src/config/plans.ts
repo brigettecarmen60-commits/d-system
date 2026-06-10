@@ -7,7 +7,7 @@ export const PLANS = {
     price: 39.9,
     isOneTime: true,     // 一次性购买，不按月续费
     features: [
-      "50 积分（够跑 3-4 次完整流程）",
+      "50 积分（够跑 1-2 次完整流程）",
       "全模式开放",
       "DeepSeek V4 Pro 引擎",
       "一次性付费，用完为止",
@@ -19,7 +19,7 @@ export const PLANS = {
     monthlyPrice: 99,
     yearlyPrice: 899,    // 99×12=1188，年付≈75折
     features: [
-      "300 积分/月（≈20 次完整流程）",
+      "300 积分/月（≈10 次完整流程）",
       "全模式开放",
       "DeepSeek V4 Pro 引擎",
       "热再生节省积分",
@@ -32,7 +32,7 @@ export const PLANS = {
     monthlyPrice: 399,
     yearlyPrice: 3599,   // 399×12=4788，年付≈75折
     features: [
-      "1500 积分/月（≈100 次完整流程）",
+      "1500 积分/月（≈50 次完整流程）",
       "全模式开放",
       "DeepSeek V4 Pro 引擎",
       "Claude 深度模式（3x 积分）",
@@ -47,20 +47,20 @@ export type PlanType = keyof typeof PLANS
 // ─── 积分消耗表 ──────────────────────────────
 
 export const CREDIT_COSTS = {
-  intel:        { cost: 1, label: "赛道分析",        model: "deepseek-chat" },
-  positioning:  { cost: 5, label: "个人定位",        model: "deepseek-chat" },
-  "mode-a":     { cost: 2, label: "纪实选题-冷启动",  model: "deepseek-reasoner" },
-  "mode-b":     { cost: 2, label: "荒诞选题-冷启动",  model: "deepseek-reasoner" },
-  "mode-n":     { cost: 2, label: "共识选题-冷启动",  model: "deepseek-reasoner" },
-  conversion:   { cost: 2, label: "转化选题-冷启动",  model: "deepseek-reasoner" },
-  trust:        { cost: 2, label: "信任选题-冷启动",  model: "deepseek-reasoner" },
+  intel:        { cost: 5, label: "赛道分析",        model: "deepseek-chat" },
+  positioning:  { cost: 10, label: "个人定位",       model: "deepseek-chat" },
+  "mode-a":     { cost: 4, label: "纪实选题-冷启动",  model: "deepseek-reasoner" },
+  "mode-b":     { cost: 4, label: "荒诞选题-冷启动",  model: "deepseek-reasoner" },
+  "mode-n":     { cost: 4, label: "共识选题-冷启动",  model: "deepseek-reasoner" },
+  conversion:   { cost: 4, label: "转化选题-冷启动",  model: "deepseek-reasoner" },
+  trust:        { cost: 4, label: "信任选题-冷启动",  model: "deepseek-reasoner" },
   // 热再生（跳过分析，同价）
-  "regen-mode-a":    { cost: 2, label: "纪实选题-热再生", model: "deepseek-reasoner" },
-  "regen-mode-b":    { cost: 2, label: "荒诞选题-热再生", model: "deepseek-reasoner" },
-  "regen-mode-n":    { cost: 2, label: "共识选题-热再生", model: "deepseek-reasoner" },
-  "regen-conversion": { cost: 2, label: "转化选题-热再生", model: "deepseek-reasoner" },
-  "regen-trust":     { cost: 2, label: "信任选题-热再生", model: "deepseek-reasoner" },
-  script:      { cost: 5, label: "脚本生成",         model: "deepseek-reasoner" },
+  "regen-mode-a":    { cost: 4, label: "纪实选题-热再生", model: "deepseek-reasoner" },
+  "regen-mode-b":    { cost: 4, label: "荒诞选题-热再生", model: "deepseek-reasoner" },
+  "regen-mode-n":    { cost: 4, label: "共识选题-热再生", model: "deepseek-reasoner" },
+  "regen-conversion": { cost: 4, label: "转化选题-热再生", model: "deepseek-reasoner" },
+  "regen-trust":     { cost: 4, label: "信任选题-热再生", model: "deepseek-reasoner" },
+  script:      { cost: 10, label: "脚本生成",        model: "deepseek-reasoner" },
   // Claude 深度模式（未来）
   "claude-topic":  { cost: 6,  label: "Claude 深度选题", model: "claude" },
   "claude-script": { cost: 15, label: "Claude 深度脚本", model: "claude" },
@@ -90,5 +90,5 @@ export function getCreditCost(mode: string): { cost: number; label: string } {
 export function estimateFullFlow(): number {
   return CREDIT_COSTS.intel.cost + CREDIT_COSTS.positioning.cost +
     CREDIT_COSTS["mode-a"].cost + CREDIT_COSTS.script.cost
-  // = 1 + 5 + 2 + 5 = 13
+  // = 5 + 10 + 4 + 10 = 29
 }
