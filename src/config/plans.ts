@@ -61,6 +61,7 @@ export const CREDIT_COSTS = {
   "regen-conversion": { cost: 4, label: "转化选题-热再生", model: "deepseek-reasoner" },
   "regen-trust":     { cost: 4, label: "信任选题-热再生", model: "deepseek-reasoner" },
   script:      { cost: 10, label: "脚本生成",        model: "deepseek-reasoner" },
+  seeding:     { cost: 20, label: "剧情种草",        model: "deepseek-reasoner" },
   // Claude 深度模式（未来）
   "claude-topic":  { cost: 6,  label: "Claude 深度选题", model: "claude" },
   "claude-script": { cost: 15, label: "Claude 深度脚本", model: "claude" },

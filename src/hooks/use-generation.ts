@@ -81,6 +81,10 @@ export function useGeneration() {
     await streamFetch({ mode: "script", topic: topic.trim(), contentType: contentType || "auto", dna: dna || undefined })
   }, [streamFetch])
 
+  const runSeeding = useCallback(async (product: string, face?: string, vow?: string, audience?: string, framework?: string, emotion?: string) => {
+    await streamFetch({ mode: "seeding", product: product.trim(), face: face || undefined, vow: vow || undefined, audience: audience || undefined, framework: framework || "auto", emotion: emotion || "auto" })
+  }, [streamFetch])
+
   // ─── 再生机制 ──────────────────────────────
   const checkRegenState = useCallback(async (niche: string, mode: string) => {
     try {
@@ -177,6 +181,6 @@ export function useGeneration() {
 
   return { phase, statusMessage, rawText, output, scriptId, tokens, usedModel, error, lastMode,
     isRegeneration, regenState,
-    runIntel, runTopics, runPositioning, runScript, runRetro, runAccountRetro, reset, parseTopics,
+    runIntel, runTopics, runPositioning, runScript, runSeeding, runRetro, runAccountRetro, reset, parseTopics,
     checkRegenState, runRegenerate, runColdRestart }
 }

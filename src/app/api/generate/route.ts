@@ -18,6 +18,7 @@ import { buildScriptPrompt, buildScriptUserMessage, buildScriptRoutingPrompt, bu
 import { buildPositioningPrompt, buildPositioningUserMessage } from "@/config/prompts/positioning"
 import { buildCContentPrompt, buildCContentUserMessage } from "@/config/prompts/c-content"
 import { buildRetroPrompt, buildRetroUserMessage, buildAccountRetroPrompt, buildAccountRetroUserMessage } from "@/config/prompts/retro"
+import { buildSeedingPrompt } from "@/config/prompts/seeding"
 import {
   extractAnglesFromOutput,
   extractCodesFromOutput,
@@ -112,6 +113,7 @@ export async function POST(req: NextRequest) {
     case "retro":             return runRetro(req, userId, body)
     case "account-retro":     return runAccountRetro(req, userId, body)
     case "script":             return runScript(req, userId, body)
+    case "seeding":           return runSeeding(req, userId, body)
     case "regen-mode-a":      return runRegenerate(req, userId, body, "mode-a")
     case "regen-mode-b":      return runRegenerate(req, userId, body, "mode-b")
     case "regen-mode-n":      return runRegenerate(req, userId, body, "mode-n")
@@ -404,5 +406,70 @@ async function runScript(req: NextRequest, userId: string, body: any) {
     const scriptCost = getCreditCost("script").cost
     await deductCredits(userId, scriptCost)
     send({ type: "done", usage: r.usage, cost: scriptCost })
+  })
+}
+
+// ─── Seeding (剧情种草) ─────────────────────────
+
+async function runSeeding(req: NextRequest, userId: string, body: any) {
+  const { product, face, vow, audience, framework, emotion } = body
+  if (!product?.trim()) return Response.json({ error: "请输入产品信息" }, { status: 400 })
+  return sse(req, async (send) => {
+    send({ type: "status", phase: "seeding", message: "正在匹配框架，构建剧情…" })
+    const genModel = selectModel("intel")
+
+    const frameworkNames: Record<string, string> = {
+      "time-entropy": "时间熵增与不可逆",
+      "unequal-exchange": "关系中的非等价交换",
+      "mirror-reconciliation": "镜像与和解",
+      "giant-mayfly": "巨物与蜉蝣",
+      "ordinary-journey": "凡人之旅",
+      "genuine-closure": "真诚的闭环",
+    }
+    const emotionNames: Record<string, string> = {
+      "warm": "温暖",
+      "release": "释然",
+      "laugh": "笑",
+      "surprise": "惊喜",
+      "regret-warm": "遗憾但温暖",
+      "anger-clarity": "愤怒后清醒",
+      "absurd-relief": "荒诞后释然",
+      "admiration": "向下兼容的仰视",
+    }
+
+    const frameworkLine = framework && framework !== "auto"
+      ? `【指定框架】${frameworkNames[framework] || framework}`
+      : "【框架】自动匹配——请根据产品的情绪时刻、假信念、观众感受三个问题自行判定，并在脚本开头声明所选框架。如果多次生成同一产品，请主动换一个框架试试，不要每次都选同一个。"
+    const emotionLine = emotion && emotion !== "auto"
+      ? `【指定情绪落点】${emotionNames[emotion] || emotion}`
+      : "【情绪落点】自动匹配——请在脚本开头声明所选情绪落点。如果多次生成同一产品，请主动换一个情绪试试。"
+
+    const userMsg = [
+      `【产品】${product}`,
+      face ? `【人设脸谱】${face}` : "",
+      vow ? `【发愿】${vow}` : "",
+      audience ? `【目标人群】${audience}` : "",
+      frameworkLine,
+      emotionLine,
+      "",
+      "## 输出要求",
+      "1. 最终输出只包含脚本本身——不要任何声明行、框架名、技法名、情绪标签。直接出脚本。",
+      "2. 脚本按时间轴：🎥画面 / 🎙️台词 / ⏱时长",
+      "3. 脚本末尾：【产品出现位置】第X秒，XX角色，X秒",
+      "4. 选框架、技法、情绪是你的内部决策过程——在脑内完成，不要写到输出里。",
+      "5. 如果选auto，同一产品多次生成时：换框架、换技法组合、换情绪落点。不要重复上一轮的组合。",
+    ].filter(Boolean).join("\n")
+
+    const r = await streamGenerate(
+      buildSeedingPrompt(),
+      userMsg,
+      genModel,
+      (t: string) => send({ type: "chunk", content: t }),
+      req.signal
+    )
+
+    const cost = getCreditCost("seeding").cost
+    await deductCredits(userId, cost)
+    send({ type: "done", usage: r.usage, cost })
   })
 }
