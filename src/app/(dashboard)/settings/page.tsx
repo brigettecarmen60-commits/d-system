@@ -89,8 +89,8 @@ export default function SettingsPage() {
               <Card className="border-cyan-200 dark:border-cyan-800 bg-cyan-50/30 dark:bg-cyan-950/10 shadow-sm">
                 <CardContent className="p-5 text-center">
                   <Sparkles className="h-5 w-5 text-cyan-500 mx-auto mb-2" />
-                  <p className="font-bold text-lg">Pro · ¥199/月</p>
-                  <p className="text-sm text-muted-foreground mt-1">50条/月 · 完整功能</p>
+                  <p className="font-bold text-lg">Pro · 300 积分/月</p>
+                  <p className="text-sm text-muted-foreground mt-1">完整功能 · 热再生</p>
                   <Button className="w-full mt-4 h-9 text-sm smooth" disabled>
                     即将开放
                   </Button>
@@ -99,8 +99,8 @@ export default function SettingsPage() {
               <Card className="glass shadow-sm">
                 <CardContent className="p-5 text-center">
                   <Crown className="h-5 w-5 text-muted-foreground mx-auto mb-2" />
-                  <p className="font-bold text-lg">Enterprise · ¥999/月</p>
-                  <p className="text-sm text-muted-foreground mt-1">300条/月 · API接入</p>
+                  <p className="font-bold text-lg">Enterprise · 1500 积分/月</p>
+                  <p className="text-sm text-muted-foreground mt-1">50次/月 · API接入 · Claude深度</p>
                   <Button className="w-full mt-4 h-9 text-sm" variant="outline" disabled>
                     即将开放
                   </Button>

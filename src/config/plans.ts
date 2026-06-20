@@ -4,20 +4,20 @@ export const PLANS = {
   TRIAL: {
     name: "试用版",
     monthlyCredits: 50,
-    price: 39.9,
-    isOneTime: true,     // 一次性购买，不按月续费
+    price: 0,            // 内测期间暂不定价
+    isOneTime: true,
     features: [
       "50 积分（够跑 1-2 次完整流程）",
       "全模式开放",
       "DeepSeek V4 Pro 引擎",
-      "一次性付费，用完为止",
+      "内测期间免费",
     ],
   },
   PRO: {
     name: "创作者版",
     monthlyCredits: 300,
-    monthlyPrice: 99,
-    yearlyPrice: 899,    // 99×12=1188，年付≈75折
+    monthlyPrice: 0,     // 内测期间暂不定价
+    yearlyPrice: 0,
     features: [
       "300 积分/月（≈10 次完整流程）",
       "全模式开放",
@@ -29,8 +29,8 @@ export const PLANS = {
   PLUS: {
     name: "工作室版",
     monthlyCredits: 1500,
-    monthlyPrice: 399,
-    yearlyPrice: 3599,   // 399×12=4788，年付≈75折
+    monthlyPrice: 0,     // 内测期间暂不定价
+    yearlyPrice: 0,
     features: [
       "1500 积分/月（≈50 次完整流程）",
       "全模式开放",
@@ -72,9 +72,9 @@ export type CreditOperation = keyof typeof CREDIT_COSTS
 // ─── 积分包（非订阅，一次性购买） ──────────
 
 export const CREDIT_PACKS = [
-  { id: "pack-30",  credits: 30,  price: 12,  label: "30 积分包" },
-  { id: "pack-80",  credits: 80,  price: 29,  label: "80 积分包" },
-  { id: "pack-200", credits: 200, price: 69,  label: "200 积分包" },
+  { id: "pack-30",  credits: 30,  price: 0,  label: "30 积分包" },
+  { id: "pack-80",  credits: 80,  price: 0,  label: "80 积分包" },
+  { id: "pack-200", credits: 200, price: 0,  label: "200 积分包" },
 ] as const
 
 // ─── 工具函数 ──────────────────────────────

@@ -123,9 +123,15 @@ function InviteCodePanel() {
                   )}
                 </div>
                 {!c.usedBy && (
-                  <Button variant="ghost" size="sm" onClick={() => copyCode(c.code)}>
-                    {copied === c.code ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="sm" onClick={() => copyCode(c.code)}>
+                      {copied === c.code ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive"
+                      onClick={async () => { if (confirm(`作废邀请码 ${c.code}？`)) { await fetch(`/api/admin/invite-codes?id=${c.id}`, { method: "DELETE" }); loadCodes() } }}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 )}
               </div>
             ))}
