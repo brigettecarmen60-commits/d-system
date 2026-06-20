@@ -17,6 +17,7 @@ const FRAMEWORKS = [
   { value: "giant-mayfly", label: "巨物与蜉蝣" },
   { value: "ordinary-journey", label: "凡人之旅" },
   { value: "genuine-closure", label: "真诚的闭环" },
+  { value: "hidden-order", label: "隐秘的秩序" },
 ]
 
 const EMOTIONS = [
@@ -29,6 +30,14 @@ const EMOTIONS = [
   { value: "anger-clarity", label: "愤怒后清醒" },
   { value: "absurd-relief", label: "荒诞后释然" },
   { value: "admiration", label: "向下兼容的仰视" },
+  { value: "loved-unseen", label: "被世界暗中爱着" },
+  { value: "fullness", label: "充盈——原来我一直被爱" },
+]
+
+const EMBED_DEPTHS = [
+  { value: "bg-prop", label: "浅：产品只入镜，不主讲" },
+  { value: "narrative-carrier", label: "中：产品推动故事，不是主角" },
+  { value: "no-embed", label: "不提产品：故事独立成立" },
 ]
 
 export default function SeedingPage() {
@@ -38,6 +47,7 @@ export default function SeedingPage() {
   const [audience, setAudience] = useState("")
   const [framework, setFramework] = useState("auto")
   const [emotion, setEmotion] = useState("auto")
+  const [embedDepth, setEmbedDepth] = useState("narrative-carrier")
   const { phase, statusMessage, rawText, error, runSeeding, reset } = useGeneration()
 
   return (
@@ -97,8 +107,17 @@ export default function SeedingPage() {
                 </Select>
               </div>
             </div>
+            <div>
+                <label className="text-sm font-medium mb-1.5 block">嵌入深度</label>
+                <Select value={embedDepth} onValueChange={setEmbedDepth}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {EMBED_DEPTHS.map(d => <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             <div className="flex gap-3">
-              <Button onClick={() => runSeeding(product, face, vow, audience, framework, emotion)} disabled={!product.trim()} className="flex-1 h-11">
+              <Button onClick={() => runSeeding(product, face, vow, audience, framework, emotion, embedDepth)} disabled={!product.trim()} className="flex-1 h-11">
                 <Sparkles className="h-4 w-4 mr-2" />生成种草脚本
               </Button>
               <Button
@@ -106,7 +125,8 @@ export default function SeedingPage() {
                 onClick={() => {
                   setFramework("auto")
                   setEmotion("auto")
-                  runSeeding(product, face, vow, audience, "auto", "auto")
+                  setEmbedDepth("narrative-carrier")
+                  runSeeding(product, face, vow, audience, "auto", "auto", "narrative-carrier")
                 }}
                 disabled={!product.trim()}
                 className="h-11"

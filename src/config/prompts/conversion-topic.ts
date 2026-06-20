@@ -85,3 +85,48 @@ export function buildConversionTopicUserMessage(input: { niche: string; dna?: st
   parts.push("脑内完整执行：决策路径5节点锁定→人货场识别→卖点提炼(3步筛选+镜头翻译)→秀肌肉方式匹配。但只输出4条选题。每条含：标题+怎么拍+顾客卡点+卖点镜头+人性驱动+代码+为什么推得动+节点。选题比例：节点1+2共2条/节点3+4共1条/节点5共1条。覆盖自检在脑内跑完。")
   return parts.join("\n")
 }
+
+// ─── Pass 1: 转化决策路由 (R1) ──────────────────────────
+
+export function buildConversionRoutingPrompt(): string {
+  return [
+    "# 转化决策路由",
+    "",
+    "你的任务只有一件：诊断顾客决策路径，输出卖点和节点分析。不写选题。",
+    "",
+    "## 分析维度",
+    "",
+    "1. 决策节点锁定：顾客现在卡在哪一步？5节点（问题认知/方案探索/选项对比/风险评估/临门一脚）各有什么可打的点？",
+    "2. 卖点提炼：从货里提取具体可拍的差异点。每个卖点过三问（竞对能不能说？镜头能不能拍到？用户在乎吗？）→ 翻译成镜头语言。",
+    "3. 顾客卡点：用顾客原话写出犹豫点（≥3个，具体到\"我担心买完就后悔\"级别，不写笼统描述）。",
+    "4. 秀肌肉优先级：5种方式（直击痛点/描绘未来/解决方案/展示案例/客户评价）中哪种最适合？",
+    "5. 节点分配：4条选题怎么分配到5个节点（节点1+2共2条/节点3+4共1条/节点5共1条）。",
+    "",
+    "## 输出JSON",
+    "```json",
+    "{",
+    '  "criticalNodes": ["节点1 问题认知", "节点4 风险评估"],',
+    '  "sellingPoints": [{"type": "材料好", "lens": "特写对比两材料同框不评价", "whyDiff": "竞对用的是XX材料，不敢放一起比"}],',
+    '  "customerStuckPoints": ["我担心买完就后悔", "别人家是不是更便宜", "万一没效果怎么办"],',
+    '  "showMusclePriority": ["直击痛点", "展示案例", "解决方案"],',
+    '  "nodeDistribution": {"node1": 1, "node2": 1, "node3": 0, "node4": 1, "node5": 1}',
+    "}",
+    "```",
+  ].join("\n")
+}
+
+export function buildConversionRoutingUserMessage(input: { niche: string; dna?: string }): string {
+  const parts = ["【赛道】" + input.niche]
+  if (input.dna) { parts.push(""); parts.push("【DNA/定位】"); parts.push(input.dna) }
+  parts.push(""); parts.push("只输出JSON决策诊断。不写选题。")
+  return parts.join("\n")
+}
+
+export function buildConversionGenUserMessage(input: { niche: string; routing: string; dna?: string }): string {
+  const parts = ["【赛道】" + input.niche]
+  parts.push(""); parts.push("【决策诊断结果】"); parts.push(input.routing)
+  if (input.dna) { parts.push(""); parts.push("【DNA/定位】"); parts.push(input.dna) }
+  parts.push("")
+  parts.push("基于诊断结果生成4条转化选题。每条：标题+怎么拍+顾客卡点+卖点镜头+人性驱动+代码+为什么推得动+节点。卖点用镜头翻译不喊口号。顾客卡点用具体原话。节点分配按诊断结果。只输出选题。")
+  return parts.join("\n")
+}

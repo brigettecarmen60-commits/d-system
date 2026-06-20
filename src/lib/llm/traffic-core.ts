@@ -147,3 +147,53 @@ export function buildTrafficCoreUserMessage(input: {
   parts.push("脑内完整执行：感知文化水温→17母题扫描→13跨域扫描→冷热判断→列20+物理触点→9步出题(每条走完)→只输出6条。每条6行：标题+拍+停+站+代码+分享。停≤15字不含赛道词。覆盖自检脑内跑完。冷门赛道必须用大池子入口思维——选题入口是所有人都经历的事，不是你行业的事。")
   return parts.join("\n")
 }
+
+// ─── Pass 1: 赛道扫描路由 (R1) ─────────────────────────
+
+export function buildTrafficRoutingPrompt(): string {
+  return [
+    "# 赛道扫描路由",
+    "",
+    "你的任务只有一件：扫描赛道，输出结构化分析。不写选题。",
+    "",
+    "## 分析维度",
+    "",
+    "1. 文化水温：当前社会情绪的关键词是什么？（焦虑/希望/愤怒/疲惫/自豪）",
+    "2. 17母题扫描：哪些母题能被这条赛道激活？（情爱/苦难/家国/成长/童话/历史/就业/社会/阶级/负债/艺术/死亡/遗憾/争议/哲学/未知/多巴胺）至少列出6个最相关的。",
+    "3. 冷热判断：赛道本身有流量（热）还是赛道没人搜（冷）？冷赛道→找寄生池子（所有人都经历的事，你的行业恰好是答案）。",
+    "4. 物理触点：列出赛道里手机能拍到的具体物证（≥15个）。不是概念，是实物——一张发票/一根废丝/一把螺丝刀。",
+    "5. 15好奇代码抽取：从负向10个（钱/性/安全/隐私/真假/公平/时间/极限/对立/身份）和正向5个（向往/归属/敬畏/温情/自豪）中各选3-5个最适合的。",
+    "6. 立场方向：站谁？反什么？（至少2个方向）",
+    "7. 跨域寄生：赛道可以寄生到哪些更大的池子里？（行业=答案容器，不是入口）",
+    "",
+    "## 输出JSON",
+    "```json",
+    "{",
+    '  "culturalTemp": "焦虑",',
+    '  "motherTopics": ["钱", "公平", "安全", "身份", "苦难", "阶级"],',
+    '  "isCold": false,',
+    '  "parasiticPools": ["所有人都经历过被坑", "打工人的共同焦虑"],',
+    '  "physicalAtoms": ["发票", "合同", "工资条", "打卡记录", "税单", "银行回单", "审计报告", "Excel表格", "老板的微信截图", "会议纪要", "营业执照", "社保记录", "罚款单", "转账记录", "对账单"],',
+    '  "negativeCodes": ["钱", "安全", "公平", "隐私", "身份"],',
+    '  "positiveCodes": ["归属", "敬畏", "温情"],',
+    '  "stances": [{"stand": "小老板被坑", "against": "行业信息不透明"}, {"stand": "打工人的钱包", "against": "隐性收费"}]',
+    "}",
+    "```",
+  ].join("\n")
+}
+
+export function buildTrafficRoutingUserMessage(input: { niche: string; dna?: string }): string {
+  const parts = ["【赛道】" + input.niche]
+  if (input.dna) { parts.push(""); parts.push("【DNA/定位】"); parts.push(input.dna) }
+  parts.push(""); parts.push("只输出JSON扫描结果。不写选题。")
+  return parts.join("\n")
+}
+
+export function buildTrafficGenUserMessage(input: { niche: string; routing: string; dna?: string }): string {
+  const parts = ["【赛道】" + input.niche]
+  parts.push(""); parts.push("【赛道扫描结果】"); parts.push(input.routing)
+  if (input.dna) { parts.push(""); parts.push("【DNA/定位】"); parts.push(input.dna) }
+  parts.push("")
+  parts.push("基于扫描结果生成6条选题。每条6行：标题+拍+停+站+代码+分享。停≤15字不含赛道词。停的理由不能含赛道词。覆盖自检脑内跑完。冷门赛道用大池子入口。只输出选题。")
+  return parts.join("\n")
+}

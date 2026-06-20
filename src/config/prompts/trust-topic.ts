@@ -100,3 +100,74 @@ export function buildTrustTopicUserMessage(input: { niche: string; dna?: string 
   parts.push("脑内完整执行：信任证据链诊断(六种最缺哪2-3种)→讨喜共识锁定(4个)→造神主线+信任标签→发愿状态检查→形式路由判断。如果用户提到了具体场域→走方向C(场域记录)；否则→走方向A(普通信任选题4条)。每条含：标题+怎么拍+证据设计+立场+信任标签+代码+为什么信了+证据来源。证据姿态：事件流露>他人证言>配角行为>自己说，自己说≤1条。覆盖自检在脑内跑完。")
   return parts.join("\n")
 }
+
+// ─── Pass 1: 信任诊断路由 (R1) ──────────────────────────
+
+export function buildTrustRoutingPrompt(): string {
+  return [
+    "# 信任诊断路由",
+    "",
+    "你的任务只有一件：诊断IP的信任证据链缺口，输出信任策略。不写选题。",
+    "",
+    "## 分析维度",
+    "",
+    "1. 信任证据链诊断：六种信任来源（人格/情绪/认知/经历/社会/审美）最缺哪2-3种？哪种已经够了？本轮优先补哪种？",
+    "2. 讨喜共识锁定：从13共识（吃苦/报恩/背叛/落魄/伤逝/走眼/孝道/格局/回家/藏锋/运气/底线/圈子）中选4个最适合的——必须判断有真实素材支撑。",
+    "3. 造神主线：六模板选一（自我救赎/我命由我/幸运的卢克/岛国の仙人/勇者斗恶龙/宝物猎人）。",
+    "4. 发愿状态检查：观众知不知道他为什么做这件事？未建立则必须安排发愿内容。",
+    "5. 信任标签预设：观众看完会贴什么词？（3个，具体——\"这人实在\"\"敢说真话\"\"跟我一样\"）。",
+    "6. 形式路由：用户提到了具体场域（车间/客户现场/工作室）→方向C场域记录。用户提到了真实故事素材→方向B人设故事（转Gem6）。都没有→方向A普通信任选题。",
+    "7. 证据姿态分布：事件流露≥2 / 他人证言+配角行为≥1 / 自己说≤1",
+    "",
+    "## 方向B判断规则",
+    "当素材包含完整的个人真实经历（有时间线/有至暗时刻/有转折事件）→方向B。输出转Gem6的参数包：核心矛盾/目标情绪/推荐框架/造神模板/介质建议。",
+    "",
+    "## 输出JSON",
+    "```json",
+    "{",
+    '  "missingTrust": ["经历证据", "人格证据"],',
+    '  "sufficient": ["认知证据", "社会证据"],',
+    '  "priority": "经历证据——观众还不知道他淋过雨",',
+    '  "likability": ["吃苦", "底线", "格局", "回家"],',
+    '  "deityTemplate": "岛国の仙人",',
+    '  "vowEstablished": false,',
+    '  "trustLabels": ["实在", "敢说真话", "有两下子"],',
+    '  "formRouting": "方向A",',
+    '  "场域": null,',
+    '  "evidencePosture": {"事件流露": 2, "他人证言": 1, "配角行为": 1, "自己说": 0},',
+    '  "转Gem6": null',
+    "}",
+    "```",
+    "",
+    "如果方向B：",
+    "```json",
+    "{",
+    '  "formRouting": "方向B",',
+    '  "转Gem6": {',
+    '    "coreConflict": "他是什么 vs 他活着的方式——最撕裂的一处",',
+    '    "targetEmotion": "观众感受到什么",',
+    '    "recommendedFramework": "凡人之旅/熵增与不可逆/镜像与和解...",',
+    '    "deityTemplate": "岛国の仙人",',
+    '    "medium": "口播/Vlog",',
+    '    "keyMaterial": "素材中最击穿人性的那句话/那个瞬间"',
+    '  }',
+    "}",
+    "```",
+  ].join("\n")
+}
+
+export function buildTrustRoutingUserMessage(input: { niche: string; dna?: string }): string {
+  const parts = ["【赛道】" + input.niche]
+  if (input.dna) { parts.push(""); parts.push("【DNA/定位】"); parts.push(input.dna) }
+  parts.push(""); parts.push("只输出JSON信任诊断。不写选题。")
+  return parts.join("\n")
+}
+
+export function buildTrustGenUserMessage(input: { niche: string; routing: string; dna?: string }): string {
+  const parts = ["【赛道】" + input.niche]
+  parts.push(""); parts.push("【信任诊断结果】"); parts.push(input.routing)
+  if (input.dna) { parts.push(""); parts.push("【DNA/定位】"); parts.push(input.dna) }
+  parts.push("")
+  parts.push("基于诊断结果生成信任内容。方向C→给场域记录指令。方向A→4条选题。每条：标题+怎么拍+证据设计+立场+信任标签+代码+为什么信了+证据来源。证据姿态优先事件流露和他人证言。自己说≤1条。只输出选题。")
+  return parts.join("\n")
+}

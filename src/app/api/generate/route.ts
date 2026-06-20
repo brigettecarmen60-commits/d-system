@@ -9,16 +9,17 @@ import { db } from "@/lib/db"
 
 // Prompt configs — user-editable
 import { buildIntelPrompt, buildIntelUserMessage } from "@/config/prompts/intel"
-import { buildModeAPrompt, buildModeAUserMessage } from "@/config/prompts/traffic-mode-a"
-import { buildModeBPrompt, buildModeBUserMessage } from "@/config/prompts/traffic-mode-b"
-import { buildCognitivePrompt, buildCognitiveUserMessage } from "@/config/prompts/cognitive"
-import { buildConversionTopicPrompt, buildConversionTopicUserMessage } from "@/config/prompts/conversion-topic"
-import { buildTrustTopicPrompt, buildTrustTopicUserMessage } from "@/config/prompts/trust-topic"
+import { buildModeAPrompt, buildModeAUserMessage, buildModeARoutingPrompt, buildModeARoutingUserMessage, buildModeAGenUserMessage } from "@/config/prompts/traffic-mode-a"
+import { buildModeBPrompt, buildModeBUserMessage, buildModeBRoutingPrompt, buildModeBRoutingUserMessage, buildModeBGenUserMessage } from "@/config/prompts/traffic-mode-b"
+import { buildCognitivePrompt, buildCognitiveUserMessage, buildCognitiveRoutingPrompt, buildCognitiveRoutingUserMessage, buildCognitiveGenUserMessage } from "@/config/prompts/cognitive"
+import { buildConversionTopicPrompt, buildConversionTopicUserMessage, buildConversionRoutingPrompt, buildConversionRoutingUserMessage, buildConversionGenUserMessage } from "@/config/prompts/conversion-topic"
+import { buildTrustTopicPrompt, buildTrustTopicUserMessage, buildTrustRoutingPrompt, buildTrustRoutingUserMessage, buildTrustGenUserMessage } from "@/config/prompts/trust-topic"
 import { buildScriptPrompt, buildScriptUserMessage, buildScriptRoutingPrompt, buildScriptRoutingUserMessage, buildScriptGenUserMessage } from "@/config/prompts/script"
 import { buildPositioningPrompt, buildPositioningUserMessage } from "@/config/prompts/positioning"
 import { buildCContentPrompt, buildCContentUserMessage } from "@/config/prompts/c-content"
 import { buildRetroPrompt, buildRetroUserMessage, buildAccountRetroPrompt, buildAccountRetroUserMessage } from "@/config/prompts/retro"
 import { buildSeedingPrompt } from "@/config/prompts/seeding"
+import { buildStoryPrompt, buildStoryRoutingPrompt, buildStoryRoutingUserMessage, buildStoryGenUserMessage } from "@/config/prompts/story"
 import {
   extractAnglesFromOutput,
   extractCodesFromOutput,
@@ -103,17 +104,18 @@ export async function POST(req: NextRequest) {
 
   switch (mode) {
     case "intel":       return runIntel(req, userId, body)
-    case "mode-a":      return runTopics(req, userId, body, buildModeAPrompt, buildModeAUserMessage, "Mode A 纪实选题")
-    case "mode-b":      return runTopics(req, userId, body, buildModeBPrompt, buildModeBUserMessage, "Mode B 荒诞选题")
-    case "mode-n":      return runTopics(req, userId, body, buildCognitivePrompt, buildCognitiveUserMessage, "Gem1-N 认知选题")
-    case "conversion":  return runTopics(req, userId, body, buildConversionTopicPrompt, buildConversionTopicUserMessage, "E2 转化选题")
-    case "trust":       return runTopics(req, userId, body, buildTrustTopicPrompt, buildTrustTopicUserMessage, "E3 信任选题")
+    case "mode-a":      return runTopics2Pass(req, userId, body, buildModeAPrompt, buildModeARoutingPrompt, buildModeARoutingUserMessage, buildModeAGenUserMessage, "mode-a", "Mode A 纪实选题")
+    case "mode-b":      return runTopics2Pass(req, userId, body, buildModeBPrompt, buildModeBRoutingPrompt, buildModeBRoutingUserMessage, buildModeBGenUserMessage, "mode-b", "Mode B 荒诞选题")
+    case "mode-n":      return runTopics2Pass(req, userId, body, buildCognitivePrompt, buildCognitiveRoutingPrompt, buildCognitiveRoutingUserMessage, buildCognitiveGenUserMessage, "mode-n", "Gem1-N 认知选题")
+    case "conversion":  return runTopics2Pass(req, userId, body, buildConversionTopicPrompt, buildConversionRoutingPrompt, buildConversionRoutingUserMessage, buildConversionGenUserMessage, "conversion", "E2 转化选题")
+    case "trust":       return runTopics2Pass(req, userId, body, buildTrustTopicPrompt, buildTrustRoutingPrompt, buildTrustRoutingUserMessage, buildTrustGenUserMessage, "trust", "E3 信任选题")
     case "positioning":       return runPositioning(req, userId, body)
     case "c-content":        return runCContent(req, userId, body)
     case "retro":             return runRetro(req, userId, body)
     case "account-retro":     return runAccountRetro(req, userId, body)
     case "script":             return runScript(req, userId, body)
     case "seeding":           return runSeeding(req, userId, body)
+    case "story":            return runStory(req, userId, body)
     case "regen-mode-a":      return runRegenerate(req, userId, body, "mode-a")
     case "regen-mode-b":      return runRegenerate(req, userId, body, "mode-b")
     case "regen-mode-n":      return runRegenerate(req, userId, body, "mode-n")
@@ -174,25 +176,51 @@ async function runIntel(req: NextRequest, userId: string, body: any) {
   })
 }
 
-// ─── Topics (R1) ─────────────────────────────────
+// ─── Topics 2-Pass ───────────────────────────────
 
-async function runTopics(
+async function runTopics2Pass(
   req: NextRequest, userId: string, body: any,
-  buildPrompt: () => string, buildUser: (input: any) => string, label: string
+  buildPrompt: () => string,
+  buildRoutingPrompt: () => string,
+  buildRoutingUser: (input: any) => string,
+  buildGenUser: (input: any) => string,
+  modeKey: string,
+  label: string
 ) {
   const { niche, targetAudience, targetGap } = body
   if (!niche?.trim() || niche.trim().length < 2) return Response.json({ error: "请输入赛道" }, { status: 400 })
-  const model = selectModel("topics")
   return sse(req, async (send) => {
-    send({ type: "status", phase: "topics", message: "正在分析赛道，生成选题中…" })
-    const r = await streamGenerate(buildPrompt(), buildUser({ niche: niche.trim(), targetAudience, targetGap, dna: body.dna }), model, (t: string) => send({ type: "chunk", content: t }), req.signal)
-    const cost = getCreditCost(body.mode || "mode-a").cost
+    // Pass 1: R1 路由分析
+    send({ type: "status", phase: "topics", message: "正在扫描赛道…" })
+    const routingModel = selectModel("topics") // R1
+    const routingResult = await streamGenerate(
+      buildRoutingPrompt(),
+      buildRoutingUser({ niche: niche.trim(), dna: body.dna }),
+      routingModel,
+      () => {}, // 不流式输出路由JSON
+      req.signal
+    )
+    let routingJson = routingResult.fullText
+    // 提取JSON
+    try { JSON.parse(routingJson.match(/```json\s*([\s\S]*?)```/)?.[1] || routingJson) } catch {
+      routingJson = JSON.stringify({ error: "routing parse failed" })
+    }
+
+    // Pass 2: V3 选题生成
+    send({ type: "status", phase: "topics", message: "正在生成选题…" })
+    const genModel = selectModel("intel") // V3
+    const r = await streamGenerate(
+      buildPrompt(),
+      buildGenUser({ niche: niche.trim(), routing: routingJson, dna: body.dna }),
+      genModel,
+      (t: string) => send({ type: "chunk", content: t }),
+      req.signal
+    )
+    const cost = getCreditCost(modeKey).cost
     await deductCredits(userId, cost)
 
-    // 保存再生状态（冷启动后自动缓存分析结论）
-    // DB表未创建时静默跳过，不影响主流程
+    // 保存再生状态
     try {
-      const modeKey = body.mode || "mode-a"
       await db.generationState.upsert({
         where: { userId_niche_mode: { userId, niche: niche.trim(), mode: modeKey } },
         create: {
@@ -212,9 +240,8 @@ async function runTopics(
       })
     } catch (e) { console.error("保存再生状态失败:", e) }
 
-    // 保存到Topic表（管理后台可查看）
     try {
-      await db.topic.create({ data: { userId, niche: niche.trim(), mode: body.mode || "mode-a", content: r.fullText } })
+      await db.topic.create({ data: { userId, niche: niche.trim(), mode: modeKey, content: r.fullText } })
     } catch (e) { console.error("保存选题失败:", e) }
 
     send({ type: "done" })
@@ -409,10 +436,48 @@ async function runScript(req: NextRequest, userId: string, body: any) {
   })
 }
 
+// ─── Story (人设故事) ──────────────────────────────
+
+async function runStory(req: NextRequest, userId: string, body: any) {
+  const { material, dna, medium } = body
+  if (!material?.trim() || material.trim().length < 10) return Response.json({ error: "请多写一点素材。至少10个字。" }, { status: 400 })
+  return sse(req, async (send) => {
+    // Pass 1: R1 框架匹配
+    send({ type: "status", phase: "story", message: "正在分析素材，匹配故事框架…" })
+    const routingModel = selectModel("topics") // R1
+    const routingResult = await streamGenerate(
+      buildStoryRoutingPrompt(),
+      buildStoryRoutingUserMessage({ material: material.trim(), dna }),
+      routingModel,
+      () => {},
+      req.signal
+    )
+    let routingJson = routingResult.fullText
+    try { JSON.parse(routingJson.match(/```json\s*([\s\S]*?)```/)?.[1] || routingJson) } catch {
+      routingJson = JSON.stringify({ framework: "凡人之旅", medium: "口播", targetEmotion: "观众感受到这个人的真实和不容易", deityTemplate: "我命由我", anomalyType: "行为异常", endingPurpose: "信任型", techniques: ["愚者的死磕"], likability: "吃苦" })
+    }
+
+    // Pass 2: V3 写故事
+    send({ type: "status", phase: "story", message: "正在写故事…" })
+    const genModel = selectModel("intel") // V3
+    const r = await streamGenerate(
+      buildStoryPrompt(),
+      buildStoryGenUserMessage({ material: material.trim(), routing: routingJson, dna, medium }),
+      genModel,
+      (t: string) => send({ type: "chunk", content: t }),
+      req.signal
+    )
+
+    const storyCost = getCreditCost("script").cost
+    await deductCredits(userId, storyCost)
+    send({ type: "done", usage: r.usage, cost: storyCost })
+  })
+}
+
 // ─── Seeding (剧情种草) ─────────────────────────
 
 async function runSeeding(req: NextRequest, userId: string, body: any) {
-  const { product, face, vow, audience, framework, emotion } = body
+  const { product, face, vow, audience, framework, emotion, embedDepth } = body
   if (!product?.trim()) return Response.json({ error: "请输入产品信息" }, { status: 400 })
   return sse(req, async (send) => {
     send({ type: "status", phase: "seeding", message: "正在匹配框架，构建剧情…" })
@@ -425,6 +490,7 @@ async function runSeeding(req: NextRequest, userId: string, body: any) {
       "giant-mayfly": "巨物与蜉蝣",
       "ordinary-journey": "凡人之旅",
       "genuine-closure": "真诚的闭环",
+      "hidden-order": "隐秘的秩序",
     }
     const emotionNames: Record<string, string> = {
       "warm": "温暖",
@@ -435,6 +501,13 @@ async function runSeeding(req: NextRequest, userId: string, body: any) {
       "anger-clarity": "愤怒后清醒",
       "absurd-relief": "荒诞后释然",
       "admiration": "向下兼容的仰视",
+      "loved-unseen": "被世界暗中爱着",
+      "fullness": "充盈——原来我一直被爱",
+    }
+    const embedDepthNames: Record<string, string> = {
+      "bg-prop": "浅：产品只入镜，不主讲。故事完全独立于产品成立。",
+      "narrative-carrier": "中：产品推动故事，但人是主角。产品最多3次，每次不超过2秒。",
+      "no-embed": "不提产品：故事完全不出现产品。只建立信任。观众因为信这个人而主动问。",
     }
 
     const frameworkLine = framework && framework !== "auto"
@@ -444,6 +517,10 @@ async function runSeeding(req: NextRequest, userId: string, body: any) {
       ? `【指定情绪落点】${emotionNames[emotion] || emotion}`
       : "【情绪落点】自动匹配——请在脚本开头声明所选情绪落点。如果多次生成同一产品，请主动换一个情绪试试。"
 
+    const embedDepthLine = embedDepth && embedDepthNames[embedDepth]
+      ? `【嵌入深度】${embedDepthNames[embedDepth]} 这是硬约束，必须严格遵守。`
+      : ""
+
     const userMsg = [
       `【产品】${product}`,
       face ? `【人设脸谱】${face}` : "",
@@ -451,6 +528,7 @@ async function runSeeding(req: NextRequest, userId: string, body: any) {
       audience ? `【目标人群】${audience}` : "",
       frameworkLine,
       emotionLine,
+      embedDepthLine,
       "",
       "## 输出要求",
       "1. 最终输出只包含脚本本身——不要任何声明行、框架名、技法名、情绪标签。直接出脚本。",

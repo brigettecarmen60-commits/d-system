@@ -106,3 +106,49 @@ export function buildModeBUserMessage(input: { niche: string; dna?: string }): s
   parts.push("脑内执行：拆解枯燥业务原子(≥20个物理切片)→决策树选桥段→读61代码原文+成熟选题→五铁律缝合→可拍性硬Gate三过滤→输出6条。每条4行：标题+拍+停+桥段。铁律5必须过：观众看完会问\"换我怎么办\"吗？不会=毙掉。")
   return parts.join("\n")
 }
+
+// ─── Pass 1: 荒诞素材扫描路由 (R1) ─────────────────────
+
+export function buildModeBRoutingPrompt(): string {
+  return [
+    "# 荒诞素材扫描路由",
+    "",
+    "你的任务只有一件：扫描赛道，输出荒诞选题的素材池。不写选题。",
+    "",
+    "## 分析维度",
+    "",
+    "1. 枯燥业务原子：拆解赛道到最微小的物理载体（≥15个）。不是概念——是一根螺丝/一张发票/一把算盘。",
+    "2. 桥段匹配：用决策树扫描——有什么能\"被测试/被比较\"？有什么\"真话没人说\"？有什么\"身份差/角色差\"？有什么\"荒谬前提\"可认真执行？有什么\"时间差/前后对比\"？有什么\"视觉奇观\"可制造？每个类别列出最合适的桥段编号。",
+    "3. 情绪代码方向：从61代码库中，哪些负向代码+正向代码组合最适合这个赛道？列出4-6个候选代码编号。",
+    "4. 荒诞角度建议：2-3个一句话描述的错位方向。",
+    "5. 可拍性预检：有没有明显的不可拍陷阱（需要演员/时机/时间跨度）？",
+    "",
+    "## 输出JSON",
+    "```json",
+    "{",
+    '  "atoms": ["发票", "税单", "Excel表格", "打印机", "计算器", "账本", "印章", "保险柜", "碎纸机", "U盘", "报销单", "工资条", "对账单", "会议记录", "营业执照"],',
+    '  "bridges": ["#1盲测对决", "#14坦白局", "#17平行对比", "#27身份错位", "#28一本正经", "#45普通人挑战专家", "#47陌生人共谋"],',
+    '  "bridgeCategories": ["游戏机制", "节目叙事", "喜剧结构", "真人秀情境"],',
+    '  "emotionCodes": ["Code 12 信息差收割", "Code 28 规则荒谬", "Code 45 精确到荒唐", "Code 08 隐形代价", "Code 33 正向震撼"],',
+    '  "absurdAngles": ["把企业报税变成盲测挑战", "让完全不懂税的网红自己报一次税"],',
+    '  "shootabilityIssues": "无——全部明天手机能拍"',
+    "}",
+    "```",
+  ].join("\n")
+}
+
+export function buildModeBRoutingUserMessage(input: { niche: string; dna?: string }): string {
+  const parts = ["【赛道】" + input.niche]
+  if (input.dna) { parts.push(""); parts.push("【DNA/定位】"); parts.push(input.dna) }
+  parts.push(""); parts.push("只输出JSON素材扫描。不写选题。")
+  return parts.join("\n")
+}
+
+export function buildModeBGenUserMessage(input: { niche: string; routing: string; dna?: string }): string {
+  const parts = ["【赛道】" + input.niche]
+  parts.push(""); parts.push("【素材扫描结果】"); parts.push(input.routing)
+  if (input.dna) { parts.push(""); parts.push("【DNA/定位】"); parts.push(input.dna) }
+  parts.push("")
+  parts.push("基于扫描结果生成6条荒诞选题。每条4行：标题+拍+停+桥段。桥段用扫描结果里匹配的编号。五铁律缝合。铁律5规则>画面——观众看完会问\"换我怎么办\"。可拍性Gate三过滤。只输出选题。")
+  return parts.join("\n")
+}
