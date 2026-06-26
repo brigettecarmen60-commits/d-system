@@ -89,6 +89,22 @@ export function useGeneration() {
     await streamFetch({ mode: "story", material: material.trim(), dna: dna || undefined, medium: medium || "auto" })
   }, [streamFetch])
 
+  const runRetell = useCallback(async (material: string, framework?: string, structure?: string, emotion?: string, medium?: string) => {
+    await streamFetch({ mode: "retell", material: material.trim(), framework: framework || "auto", structure: structure || "auto", emotion: emotion || "auto", medium: medium || "auto" })
+  }, [streamFetch])
+
+  const runSprint = useCallback(async (stage: string, goal: string, niche?: string, recentData?: string) => {
+    await streamFetch({ mode: "sprint", stage: stage.trim(), goal: goal.trim(), niche: niche?.trim() || undefined, recentData: recentData?.trim() || undefined })
+  }, [streamFetch])
+
+  const runScriptCopy = useCallback(async (topic: string, contentType?: string, dna?: string) => {
+    await streamFetch({ mode: "script-copy", topic: topic.trim(), contentType: contentType || "auto", dna: dna || undefined })
+  }, [streamFetch])
+
+  const runWeigui = useCallback(async (scriptContent: string) => {
+    await streamFetch({ mode: "weigui", scriptContent: scriptContent.trim() })
+  }, [streamFetch])
+
   // ─── 再生机制 ──────────────────────────────
   const checkRegenState = useCallback(async (niche: string, mode: string) => {
     try {
@@ -185,6 +201,6 @@ export function useGeneration() {
 
   return { phase, statusMessage, rawText, output, scriptId, tokens, usedModel, error, lastMode,
     isRegeneration, regenState,
-    runIntel, runTopics, runPositioning, runScript, runSeeding, runStory, runRetro, runAccountRetro, reset, parseTopics,
+    runIntel, runTopics, runPositioning, runScript, runScriptCopy, runSeeding, runStory, runRetell, runSprint, runWeigui, runRetro, runAccountRetro, reset, parseTopics,
     checkRegenState, runRegenerate, runColdRestart }
 }

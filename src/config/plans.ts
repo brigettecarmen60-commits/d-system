@@ -62,6 +62,10 @@ export const CREDIT_COSTS = {
   "regen-trust":     { cost: 4, label: "信任选题-热再生", model: "deepseek-reasoner" },
   script:      { cost: 10, label: "脚本生成",        model: "deepseek-reasoner" },
   seeding:     { cost: 20, label: "剧情种草",        model: "deepseek-reasoner" },
+  sprint:      { cost: 8,  label: "两周冲刺",        model: "deepseek-chat" },
+  "script-copy": { cost: 8,  label: "纯文案脚本",    model: "deepseek-reasoner" },
+  redian:      { cost: 6,  label: "热点选题",        model: "deepseek-chat" },
+  weigui:      { cost: 3,  label: "违规检测",        model: "deepseek-chat" },
   // Claude 深度模式（未来）
   "claude-topic":  { cost: 6,  label: "Claude 深度选题", model: "claude" },
   "claude-script": { cost: 15, label: "Claude 深度脚本", model: "claude" },

@@ -3,9 +3,11 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Copy, Check, Download } from "lucide-react"
-import { useState } from "react"
+import { Copy, Check, Download, Lightbulb, PenLine } from "lucide-react"
+import { useState, useEffect } from "react"
+import Link from "next/link"
 import { downloadMarkdown } from "@/lib/utils"
+import { recordActivity, recordPipelineStage } from "@/lib/activity"
 
 // Parse strategic card table from raw text
 function parseStrategyCard(raw: string): { route: string; who: string; fight: string; remember: string; firstTopic: string } | null {
@@ -34,6 +36,13 @@ export function PositioningReport({ rawText, niche }: { rawText: string; niche: 
   const [copied, setCopied] = useState(false)
   const card = parseStrategyCard(rawText)
   const dna = parseDNA(rawText)
+
+  // Store DNA for cross-page use + track activity
+  useEffect(() => {
+    if (dna) sessionStorage.setItem("last-dna", dna)
+    recordActivity({ type: "positioning", niche, title: `定位 · ${niche}`, timestamp: Date.now() })
+    recordPipelineStage("positioning", niche)
+  }, [dna, niche])
 
   async function copyDNA() {
     await navigator.clipboard.writeText(dna)
@@ -106,6 +115,16 @@ export function PositioningReport({ rawText, niche }: { rawText: string; niche: 
           <pre className="text-xs font-mono bg-white rounded-lg p-3 border border-gray-200 max-h-48 overflow-y-auto">{dna}</pre>
         </CardContent>
       </Card>
+
+      {/* 下一步 */}
+      <div className="flex flex-wrap gap-2">
+        <Link href={`/topics?niche=${encodeURIComponent(niche)}&useDna=true`}>
+          <Button variant="outline"><Lightbulb className="h-4 w-4 mr-2" />用此DNA生成选题</Button>
+        </Link>
+        <Link href={`/script?topic=${encodeURIComponent(card?.firstTopic || niche)}&useDna=true`}>
+          <Button variant="outline"><PenLine className="h-4 w-4 mr-2" />用此DNA写脚本</Button>
+        </Link>
+      </div>
 
       {/* 详细报告 — 折叠 */}
       <Card className="border border-gray-100 shadow-none">

@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { useGeneration } from "@/hooks/use-generation"
-import { Search, Loader2, RotateCcw } from "lucide-react"
+import { Search, Loader2, RotateCcw, Lightbulb, Compass } from "lucide-react"
+import Link from "next/link"
+import { recordActivity, recordPipelineStage } from "@/lib/activity"
 
 export default function AnalyzePage() {
   const [niche, setNiche] = useState("")
@@ -59,9 +61,17 @@ export default function AnalyzePage() {
               <pre className="text-sm whitespace-pre-wrap font-sans leading-relaxed">{rawText}</pre>
             </CardContent>
           </Card>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Link href={`/topics?niche=${encodeURIComponent(niche)}`}>
+              <Button variant="outline"><Lightbulb className="h-4 w-4 mr-2" />基于此赛道生成选题</Button>
+            </Link>
+            <Link href={`/positioning?niche=${encodeURIComponent(niche)}`}>
+              <Button variant="outline"><Compass className="h-4 w-4 mr-2" />基于此赛道做定位</Button>
+            </Link>
             <Button variant="outline" onClick={reset}><RotateCcw className="h-4 w-4 mr-2" />重新分析</Button>
           </div>
+          {/* 活动追踪 */}
+          {(() => { recordActivity({ type: "analyze", niche, title: niche, timestamp: Date.now() }); recordPipelineStage("analyze", niche); return null })()}
         </div>
       )}
 

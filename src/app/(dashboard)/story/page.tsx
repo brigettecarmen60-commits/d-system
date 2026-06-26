@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useGeneration } from "@/hooks/use-generation"
+import { recordActivity } from "@/lib/activity"
 import { BookOpen, Loader2, Copy, RotateCcw, Sparkles } from "lucide-react"
 
 export default function StoryPage() {
@@ -83,6 +84,7 @@ export default function StoryPage() {
             <Button onClick={reset} variant="outline" className="smooth"><RotateCcw className="h-4 w-4 mr-2" />新故事</Button>
             <Button variant="outline" className="smooth" onClick={() => navigator.clipboard.writeText(rawText)}><Copy className="h-4 w-4 mr-2" />复制全文</Button>
           </div>
+          {(() => { recordActivity({ type: "story", title: "人设故事", timestamp: Date.now() }); return null })()}
         </div>
       )}
 

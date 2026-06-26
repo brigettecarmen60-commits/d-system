@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { Coffee, Loader2, RotateCcw, Copy, Check, ArrowRight } from "lucide-react"
 import { useGeneration } from "@/hooks/use-generation"
+import { recordActivity } from "@/lib/activity"
 import Link from "next/link"
 
 export default function CContentPage() {
@@ -93,6 +94,7 @@ export default function CContentPage() {
               </Link>
             </CardContent>
           </Card>
+          {(() => { recordActivity({ type: "c-content", niche: "内容方向", title: "普通人挖掘", timestamp: Date.now() }); return null })()}
         </div>
       )}
 

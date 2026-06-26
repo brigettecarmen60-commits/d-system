@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useGeneration } from "@/hooks/use-generation"
+import { recordActivity } from "@/lib/activity"
 import { Camera, Loader2, Copy, RotateCcw, Sparkles, Shuffle } from "lucide-react"
 
 const FRAMEWORKS = [
@@ -169,6 +170,7 @@ export default function SeedingPage() {
               <RotateCcw className="h-4 w-4 mr-2" />重新生成
             </Button>
           </div>
+          {(() => { recordActivity({ type: "seeding", title: "剧情种草", timestamp: Date.now() }); return null })()}
         </div>
       )}
 

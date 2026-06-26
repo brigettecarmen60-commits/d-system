@@ -19,7 +19,12 @@ import { buildPositioningPrompt, buildPositioningUserMessage } from "@/config/pr
 import { buildCContentPrompt, buildCContentUserMessage } from "@/config/prompts/c-content"
 import { buildRetroPrompt, buildRetroUserMessage, buildAccountRetroPrompt, buildAccountRetroUserMessage } from "@/config/prompts/retro"
 import { buildSeedingPrompt } from "@/config/prompts/seeding"
+import { buildRetellPrompt, buildRetellUserMessage } from "@/config/prompts/retell"
 import { buildStoryPrompt, buildStoryRoutingPrompt, buildStoryRoutingUserMessage, buildStoryGenUserMessage } from "@/config/prompts/story"
+import { buildSprintPrompt, buildSprintUserMessage } from "@/config/prompts/sprint"
+import { buildWeiguiPrompt, buildWeiguiUserMessage } from "@/config/prompts/weigui"
+import { buildHotTopicPrompt, buildHotTopicUserMessage } from "@/config/prompts/hot-topic"
+import { buildScriptCopyPrompt, buildScriptCopyUserMessage } from "@/config/prompts/script"
 import {
   extractAnglesFromOutput,
   extractCodesFromOutput,
@@ -114,8 +119,13 @@ export async function POST(req: NextRequest) {
     case "retro":             return runRetro(req, userId, body)
     case "account-retro":     return runAccountRetro(req, userId, body)
     case "script":             return runScript(req, userId, body)
+    case "script-copy":       return runScriptCopy(req, userId, body)
     case "seeding":           return runSeeding(req, userId, body)
+    case "retell":            return runRetell(req, userId, body)
     case "story":            return runStory(req, userId, body)
+    case "sprint":           return runSprint(req, userId, body)
+    case "redian":           return runRedian(req, userId, body)
+    case "weigui":           return runWeigui(req, userId, body)
     case "regen-mode-a":      return runRegenerate(req, userId, body, "mode-a")
     case "regen-mode-b":      return runRegenerate(req, userId, body, "mode-b")
     case "regen-mode-n":      return runRegenerate(req, userId, body, "mode-n")
@@ -151,21 +161,39 @@ async function runIntel(req: NextRequest, userId: string, body: any) {
   if (!niche?.trim() || niche.trim().length < 2) return Response.json({ error: "请输入赛道" }, { status: 400 })
   const model = selectModel("intel")
   return sse(req, async (send) => {
-    send({ type: "status", phase: "intel", message: "正在搜索行业真实数据…" })
+    send({ type: "status", phase: "intel", message: "正在搜索6个维度真实数据…" })
 
-    // 搜索真实数据
-    const [search1, search2] = await Promise.all([
-      searchWeb(`${niche} 行业分析 市场规模 2024 2025`),
-      searchWeb(`${niche} 痛点 竞争 趋势`),
-    ])
-    const searchResults = [search1, search2].filter(Boolean).join("\n\n---\n\n")
-    if (searchResults) {
-      send({ type: "status", phase: "intel", message: "搜索完成，正在分析…" })
+    // 六维度分维搜索——每个维度一个独立query，结果独立编号
+    const dimensions = {
+      money:    `${niche} 市场规模 客单价 毛利率 收入 盈利模式 2024 2025`,
+      pit:      `${niche} 行业乱象 失败原因 骗局 投诉 消费者踩坑 风险`,
+      people:   `${niche} 用户画像 目标人群 消费者 购买动机 痛点`,
+      landscape:`${niche} 竞争格局 头部品牌 市场份额 排名 新进入者`,
+      traffic:  `${niche} 获客渠道 流量来源 推广方式 获客成本`,
+      verdict:  `${niche} 行业前景 投资机会 风险提示 趋势 2025`,
     }
+
+    const searches = await Promise.all([
+      searchWeb(dimensions.money),
+      searchWeb(dimensions.pit),
+      searchWeb(dimensions.people),
+      searchWeb(dimensions.landscape),
+      searchWeb(dimensions.traffic),
+      searchWeb(dimensions.verdict),
+    ])
+
+    const dimKeys = ["money", "pit", "people", "landscape", "traffic", "verdict"] as const
+    const searchResults: Record<string, string> = {}
+    let hitCount = 0
+    dimKeys.forEach((key, i) => {
+      if (searches[i]) { searchResults[key] = searches[i]; hitCount++ }
+    })
+
+    send({ type: "status", phase: "intel", message: `搜索完成（${hitCount}/6 维度有数据），正在分析…` })
 
     const r = await streamGenerate(
       buildIntelPrompt(),
-      buildIntelUserMessage({ niche: niche.trim(), searchResults: searchResults || undefined }),
+      buildIntelUserMessage({ niche: niche.trim(), searchResults }),
       model,
       (t: string) => send({ type: "chunk", content: t }),
       req.signal
@@ -474,6 +502,33 @@ async function runStory(req: NextRequest, userId: string, body: any) {
   })
 }
 
+// ─── Retell (故事重述) ─────────────────────────
+
+async function runRetell(req: NextRequest, userId: string, body: any) {
+  const { material, framework, structure, emotion, medium } = body
+  if (!material?.trim() || material.trim().length < 10) return Response.json({ error: "请多写一点素材。" }, { status: 400 })
+  return sse(req, async (send) => {
+    send({ type: "status", phase: "retell", message: "正在判定框架，重组故事…" })
+    const genModel = selectModel("intel")
+    const r = await streamGenerate(
+      buildRetellPrompt(),
+      buildRetellUserMessage({
+        material: material.trim(),
+        framework: framework || "auto",
+        structure: structure || "auto",
+        emotion: emotion || "auto",
+        medium: medium || "auto",
+      }),
+      genModel,
+      (t: string) => send({ type: "chunk", content: t }),
+      req.signal
+    )
+    const cost = getCreditCost("script").cost
+    await deductCredits(userId, cost)
+    send({ type: "done", usage: r.usage, cost: cost })
+  })
+}
+
 // ─── Seeding (剧情种草) ─────────────────────────
 
 async function runSeeding(req: NextRequest, userId: string, body: any) {
@@ -547,6 +602,118 @@ async function runSeeding(req: NextRequest, userId: string, body: any) {
     )
 
     const cost = getCreditCost("seeding").cost
+    await deductCredits(userId, cost)
+    send({ type: "done", usage: r.usage, cost })
+  })
+}
+
+// ─── Sprint (V3) ────────────────────────────────
+
+async function runSprint(req: NextRequest, userId: string, body: any) {
+  const { stage, goal, niche, recentData } = body
+  if (!stage?.trim() || !goal?.trim()) return Response.json({ error: "请选择账号阶段并填写季度目标" }, { status: 400 })
+  const model = selectModel("intel")
+  return sse(req, async (send) => {
+    send({ type: "status", phase: "sprint", message: "正在诊断现状，设定Season OKR…" })
+    const r = await streamGenerate(
+      buildSprintPrompt(),
+      buildSprintUserMessage({ stage: stage.trim(), goal: goal.trim(), niche: niche?.trim(), recentData: recentData?.trim() }),
+      model,
+      (t: string) => send({ type: "chunk", content: t }),
+      req.signal
+    )
+    const cost = getCreditCost("sprint").cost
+    await deductCredits(userId, cost)
+    send({ type: "done", usage: r.usage, cost })
+  })
+}
+
+// ─── Script Copy (纯文案模式，双pass) ───────────
+
+async function runScriptCopy(req: NextRequest, userId: string, body: any) {
+  const { topic, contentType, dna } = body
+  if (!topic?.trim()) return Response.json({ error: "请选择选题" }, { status: 400 })
+  return sse(req, async (send) => {
+    // Pass 1: R1 路由判定（复用script routing）
+    send({ type: "status", phase: "script", message: "正在分析选题，判定路由…" })
+    const routingModel = selectModel("topics")
+    const routingResult = await streamGenerate(
+      buildScriptRoutingPrompt(),
+      buildScriptRoutingUserMessage({ topic: topic.trim() }),
+      routingModel,
+      () => {},
+      req.signal
+    )
+    let routingJson = routingResult.fullText
+    try { JSON.parse(routingJson.match(/```json\s*([\s\S]*?)```/)?.[1] || routingJson) } catch {
+      routingJson = JSON.stringify({ type: "文案驱动", toWho: "Problem-aware", narrativeStructure: "认知颠覆", emotionPath: "确信→怀疑→恍然", tone: "深夜聊天型", relationship: "朋友交底", duration: "1-2min" })
+    }
+
+    // Pass 2: V3 写纯文案（用copy prompt）
+    send({ type: "status", phase: "script", message: "正在写口播稿…" })
+    const genModel = selectModel("intel")
+    const r = await streamGenerate(
+      buildScriptCopyPrompt(),
+      buildScriptCopyUserMessage({ topic: topic.trim(), routing: routingJson, contentType, dna }),
+      genModel,
+      (t: string) => send({ type: "chunk", content: t }),
+      req.signal
+    )
+
+    const cost = getCreditCost("script-copy").cost
+    await deductCredits(userId, cost)
+    send({ type: "done", usage: r.usage, cost })
+  })
+}
+
+// ─── Redian 热点选题 (V3 + 搜索) ──────────────────
+
+async function runRedian(req: NextRequest, userId: string, body: any) {
+  const { niche } = body
+  if (!niche?.trim() || niche.trim().length < 2) return Response.json({ error: "请输入赛道" }, { status: 400 })
+  const model = selectModel("intel")
+  return sse(req, async (send) => {
+    send({ type: "status", phase: "redian", message: "正在抓取多平台热点…" })
+
+    // 搜索当前热点
+    const [hot1, hot2] = await Promise.all([
+      searchWeb(`${niche} 热点 热搜 最新话题 趋势 2025`),
+      searchWeb(`${niche} 热门事件 社交媒体 爆款 2025`),
+    ])
+    const searchResults = [hot1, hot2].filter(Boolean).join("\n\n---\n\n")
+    if (searchResults) {
+      send({ type: "status", phase: "redian", message: "热点抓取完成，正在改编为选题…" })
+    }
+
+    const r = await streamGenerate(
+      buildHotTopicPrompt(),
+      buildHotTopicUserMessage({ niche: niche.trim(), searchResults: searchResults || undefined }),
+      model,
+      (t: string) => send({ type: "chunk", content: t }),
+      req.signal
+    )
+    const cost = getCreditCost("redian").cost
+    await deductCredits(userId, cost)
+    send({ type: "done", usage: r.usage, cost })
+  })
+}
+
+// ─── Weigui 违规检测 (V3) ────────────────────────
+
+async function runWeigui(req: NextRequest, userId: string, body: any) {
+  const { scriptContent } = body
+  if (!scriptContent?.trim() || scriptContent.trim().length < 20) return Response.json({ error: "文案太短，至少20字" }, { status: 400 })
+  const model = selectModel("intel")
+  return sse(req, async (send) => {
+    send({ type: "status", phase: "weigui", message: "正在扫描7类违规…" })
+    const r = await streamGenerate(
+      buildWeiguiPrompt(),
+      buildWeiguiUserMessage({ scriptContent: scriptContent.trim() }),
+      model,
+      (t: string) => send({ type: "chunk", content: t }),
+      req.signal
+    )
+    const cost = getCreditCost("weigui").cost
     await deductCredits(userId, cost)
     send({ type: "done", usage: r.usage, cost })
   })

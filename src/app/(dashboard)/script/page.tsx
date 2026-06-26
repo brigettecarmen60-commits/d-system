@@ -1,31 +1,115 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
+import { useSearchParams } from "next/navigation"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useGeneration } from "@/hooks/use-generation"
-import { PenLine, Loader2, Copy, RotateCcw, Sparkles } from "lucide-react"
+import { PenLine, Loader2, Copy, RotateCcw, Sparkles, BarChart3, Shield, Check, AlertTriangle } from "lucide-react"
+import { recordActivity, recordPipelineStage } from "@/lib/activity"
 
 export default function ScriptPage() {
-  const [topic, setTopic] = useState("")
+  const searchParams = useSearchParams()
+  const topicFromUrl = searchParams.get("topic") || ""
+  const useDna = searchParams.get("useDna") === "true"
+
+  const [topic, setTopic] = useState(topicFromUrl)
   const [contentType, setContentType] = useState("auto")
   const [dna, setDna] = useState("")
-  const { phase, statusMessage, rawText, output, tokens, error, runScript, reset } = useGeneration()
+  const [scriptMode, setScriptMode] = useState<"framework" | "copy">("framework")
+
+  // 从定位页带过来的DNA
+  if (useDna && !dna) {
+    const stored = sessionStorage.getItem("last-dna")
+    if (stored) setDna(stored)
+  }
+
+  const { phase, statusMessage, rawText, output, tokens, error, runScript, runScriptCopy, reset } = useGeneration()
+
+  // ─── 违规检测（独立状态） ──────────────
+  const [weiguiPhase, setWeiguiPhase] = useState<"idle" | "generating" | "complete" | "error">("idle")
+  const [weiguiResult, setWeiguiResult] = useState("")
+  const [weiguiError, setWeiguiError] = useState("")
+  const weiguiAbortRef = useRef<AbortController | null>(null)
+
+  async function handleWeiguiCheck() {
+    setWeiguiPhase("generating")
+    setWeiguiResult("")
+    setWeiguiError("")
+    const ctrl = new AbortController()
+    weiguiAbortRef.current = ctrl
+    try {
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "weigui", scriptContent: rawText }),
+        signal: ctrl.signal,
+      })
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error || "检查失败") }
+      const reader = res.body?.getReader()
+      if (!reader) throw new Error("无响应流")
+      const dec = new TextDecoder()
+      let buf = "", acc = ""
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += dec.decode(value, { stream: true })
+        const lines = buf.split("\n\n"); buf = lines.pop() || ""
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue
+          try {
+            const ev = JSON.parse(line.slice(6))
+            if (ev.type === "chunk") { acc += ev.content || ""; setWeiguiResult(acc) }
+            else if (ev.type === "done") { setWeiguiPhase("complete") }
+            else if (ev.type === "error") throw new Error(ev.message)
+          } catch { /* skip parse errors */ }
+        }
+      }
+    } catch (err: any) {
+      setWeiguiError(err.name === "AbortError" ? "已取消" : (err.message || "检查失败"))
+      setWeiguiPhase("error")
+    }
+  }
+
+  function handleGenerate() {
+    if (scriptMode === "copy") {
+      runScriptCopy(topic, contentType, dna)
+    } else {
+      runScript(topic, contentType, dna)
+    }
+  }
+
+  // 活动追踪
+  if (phase === "complete" && rawText) {
+    recordActivity({ type: scriptMode === "copy" ? "script-copy" : "script", niche: topic, title: topic, timestamp: Date.now() })
+    recordPipelineStage("script", topic)
+  }
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <h1 className="text-2xl font-bold flex items-center gap-2"><PenLine className="h-6 w-6 text-primary" />写脚本</h1>
       <p className="text-muted-foreground">输入选题，老D 自动判定类型→to who→叙事结构→管线执行。</p>
 
-
       {phase === "idle" && (
         <Card className="glass border-0 shadow-sm">
           <CardContent className="p-6 space-y-4">
+            {/* 模式切换 */}
+            <Tabs value={scriptMode} onValueChange={(v) => setScriptMode(v as "framework" | "copy")}>
+              <TabsList className="w-full">
+                <TabsTrigger value="framework" className="flex-1">框架驱动</TabsTrigger>
+                <TabsTrigger value="copy" className="flex-1">文案驱动</TabsTrigger>
+              </TabsList>
+            </Tabs>
+
             <Textarea
-              placeholder="输入选题，比如：为什么90%的人买保险都踩坑了？"
+              placeholder={scriptMode === "framework"
+                ? "输入选题，比如：为什么90%的人买保险都踩坑了？"
+                : "输入选题，比如：我做了十年会计，最怕听到的一句话是…"}
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               rows={3}
@@ -52,8 +136,9 @@ export default function ScriptPage() {
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={() => runScript(topic, contentType, dna)} disabled={!topic.trim()} className="w-full h-11 smooth">
-              <Sparkles className="h-4 w-4 mr-2" />生成脚本
+            <Button onClick={handleGenerate} disabled={!topic.trim()} className="w-full h-11 smooth">
+              <Sparkles className="h-4 w-4 mr-2" />
+              {scriptMode === "copy" ? "生成口播稿" : "生成脚本"}
             </Button>
           </CardContent>
         </Card>
@@ -78,10 +163,45 @@ export default function ScriptPage() {
               <pre className="text-sm whitespace-pre-wrap font-sans leading-relaxed">{rawText}</pre>
             </CardContent>
           </Card>
-          <div className="flex gap-3">
-            <Button onClick={reset} variant="outline" className="smooth"><RotateCcw className="h-4 w-4 mr-2" />新脚本</Button>
-            <Button variant="outline" className="smooth" onClick={() => navigator.clipboard.writeText(rawText)}><Copy className="h-4 w-4 mr-2" />复制全文</Button>
+
+          <div className="flex flex-wrap gap-3">
+            <Link href={`/retro?topic=${encodeURIComponent(topic)}`}>
+              <Button variant="outline"><BarChart3 className="h-4 w-4 mr-2" />发布后去复盘</Button>
+            </Link>
+            <Button variant="outline" onClick={handleWeiguiCheck} disabled={weiguiPhase === "generating"}>
+              <Shield className="h-4 w-4 mr-2" />
+              {weiguiPhase === "generating" ? "检测中…" : weiguiPhase === "complete" ? "重新检测" : "检查违规"}
+            </Button>
+            <Button onClick={reset} variant="outline"><RotateCcw className="h-4 w-4 mr-2" />新脚本</Button>
+            <Button variant="outline" onClick={() => navigator.clipboard.writeText(rawText)}><Copy className="h-4 w-4 mr-2" />复制全文</Button>
           </div>
+
+          {/* 违规检测结果 */}
+          {weiguiPhase === "generating" && (
+            <Card className="border border-amber-200 bg-amber-50/50">
+              <CardContent className="py-8 text-center">
+                <Loader2 className="h-6 w-6 text-amber-500 animate-spin mx-auto mb-2" />
+                <p className="text-sm text-amber-700">正在扫描7类违规…</p>
+              </CardContent>
+            </Card>
+          )}
+          {weiguiPhase === "complete" && weiguiResult && (
+            <Card className="border border-gray-100 shadow-none">
+              <CardContent className="p-5">
+                <h3 className="font-bold text-sm flex items-center gap-2 mb-3"><Shield className="h-4 w-4 text-emerald-500" />违规检测报告</h3>
+                <pre className="text-sm whitespace-pre-wrap font-sans leading-relaxed bg-muted/20 rounded-lg p-4 max-h-80 overflow-y-auto">{weiguiResult}</pre>
+              </CardContent>
+            </Card>
+          )}
+          {weiguiPhase === "error" && (
+            <Card className="border-2 border-destructive/30">
+              <CardContent className="py-6 text-center">
+                <AlertTriangle className="h-5 w-5 text-destructive mx-auto mb-2" />
+                <p className="text-sm text-destructive">{weiguiError}</p>
+                <Button variant="outline" size="sm" className="mt-2" onClick={() => setWeiguiPhase("idle")}>关闭</Button>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
 

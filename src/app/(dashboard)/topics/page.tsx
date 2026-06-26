@@ -1,14 +1,17 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Lightbulb, Loader2, RotateCcw, Copy, Check, TrendingUp, Sparkles, Brain, Target, Heart, Save, Zap, Download } from "lucide-react"
+import { Lightbulb, Loader2, RotateCcw, Copy, Check, TrendingUp, Sparkles, Brain, Target, Heart, Save, Zap, Download, PenLine, Flame } from "lucide-react"
 import { useGeneration } from "@/hooks/use-generation"
 import { downloadMarkdown } from "@/lib/utils"
+import { recordActivity, recordPipelineStage } from "@/lib/activity"
 
 const MODES = [
   { key: "mode-a", label: "纪实进化", icon: TrendingUp, desc: "日常真实切片拍出悬念。有物理场景、有实物可拍的行业。" },
@@ -16,10 +19,14 @@ const MODES = [
   { key: "mode-n", label: "共识挖掘", icon: Brain, desc: "找到所有人都有的共识缺口。行业只是答案，人性才是战场。" },
   { key: "conversion", label: "转化选题", icon: Target, desc: "在顾客犹豫的每个卡点精准推一把。秀肌肉不喊口号。" },
   { key: "trust", label: "信任选题", icon: Heart, desc: "补齐观众脑子里的信任拼图。让事实替你说话。" },
+  { key: "redian", label: "热点选题", icon: Flame, desc: "抓取当前平台热点，用多平台共振评分改编成选题。" },
 ]
 
 export default function TopicsPage() {
-  const [niche, setNiche] = useState("")
+  const searchParams = useSearchParams()
+  const nicheFromUrl = searchParams.get("niche") || ""
+  const useDna = searchParams.get("useDna") === "true"
+  const [niche, setNiche] = useState(nicheFromUrl)
   const [dna, setDna] = useState("")
   const [activeMode, setActiveMode] = useState("mode-a")
   const [copied, setCopied] = useState<string | null>(null)
@@ -27,6 +34,14 @@ export default function TopicsPage() {
     runTopics, reset, parseTopics, checkRegenState, runRegenerate, runColdRestart } = useGeneration()
 
   const topics = (phase === "complete" || phase === "generating") && rawText ? parseTopics(rawText) : []
+
+  // 从定位页带过来的DNA
+  useEffect(() => {
+    if (useDna) {
+      const stored = sessionStorage.getItem("last-dna")
+      if (stored) setDna(stored)
+    }
+  }, [useDna])
 
   useEffect(() => {
     if (phase === "complete" && niche.trim() && activeMode && !isRegeneration) {
@@ -141,6 +156,11 @@ export default function TopicsPage() {
                 <CardContent className="p-4 space-y-2">
                   <h3 className="font-semibold leading-snug">{t.title}</h3>
                   {t.detail && <p className="text-sm text-muted-foreground leading-relaxed">{t.detail}</p>}
+                  <div className="pt-1">
+                    <Link href={`/script?topic=${encodeURIComponent(t.title)}${dna ? "&useDna=true" : ""}`}>
+                      <Button variant="outline" size="sm"><PenLine className="h-3.5 w-3.5 mr-1" />写脚本</Button>
+                    </Link>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -162,6 +182,8 @@ export default function TopicsPage() {
           </div>
 
           <div className="text-xs text-muted-foreground text-center pt-2">保存位置：浏览器本地存储</div>
+          {/* 活动追踪 */}
+          {(() => { recordActivity({ type: "topics", niche, title: `${mode.label} · ${niche}`, timestamp: Date.now() }); recordPipelineStage("topics", niche); return null })()}
         </div>
       )}
 

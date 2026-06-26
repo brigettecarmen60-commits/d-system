@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -9,12 +10,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BarChart3, Loader2, Copy, Check, Coins, Download, TrendingUp } from "lucide-react"
 import { downloadMarkdown } from "@/lib/utils"
 import { useGeneration } from "@/hooks/use-generation"
+import { recordActivity, recordPipelineStage } from "@/lib/activity"
 
 export default function RetroPage() {
+  const searchParams = useSearchParams()
+  const topicFromUrl = searchParams.get("topic") || ""
   const [activeTab, setActiveTab] = useState("single")
 
   // Plan A
-  const [topic, setTopic] = useState("")
+  const [topic, setTopic] = useState(topicFromUrl)
   const [singlePurpose, setSinglePurpose] = useState("")
   const [publishDate, setPublishDate] = useState("")
   const [platform, setPlatform] = useState("")
@@ -128,6 +132,8 @@ export default function RetroPage() {
             <div className="flex justify-between pt-2 border-t">
               <Button variant="ghost" size="sm" onClick={reset}>重新复盘</Button>
             </div>
+            {/* 活动追踪 */}
+            {(() => { recordActivity({ type: "retro", niche: topic, title: topic, timestamp: Date.now() }); recordPipelineStage("retro", topic); return null })()}
           </CardContent>
         </Card>
       )}

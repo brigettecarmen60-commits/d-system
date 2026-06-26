@@ -4,11 +4,12 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Search, Lightbulb, PenLine, FileText, Settings, Sparkles, Compass, Ticket, Loader2, Shield, BarChart3, Coffee, Camera, BookOpen, HelpCircle } from "lucide-react"
+import { Search, Lightbulb, PenLine, FileText, Settings, Sparkles, Compass, Ticket, Loader2, Shield, BarChart3, Coffee, Camera, BookOpen, HelpCircle, LayoutDashboard, CalendarDays, RefreshCw } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Input } from "@/components/ui/input"
 
 const navItems = [
+  { title: "工作台", href: "/dashboard", icon: LayoutDashboard },
   { title: "使用教程", href: "/guide", icon: HelpCircle },
   { title: "赛道分析", href: "/analyze", icon: Search },
   { title: "个人定位", href: "/positioning", icon: Compass },
@@ -17,6 +18,8 @@ const navItems = [
   { title: "写脚本", href: "/script", icon: PenLine },
   { title: "人设故事", href: "/story", icon: BookOpen },
   { title: "剧情种草", href: "/seeding", icon: Camera },
+  { title: "故事重述", href: "/retell", icon: RefreshCw },
+  { title: "两周冲刺", href: "/sprint", icon: CalendarDays },
   { title: "内容复盘", href: "/retro", icon: BarChart3 },
   { title: "我的脚本", href: "/scripts", icon: FileText },
   { title: "设置", href: "/settings", icon: Settings },
