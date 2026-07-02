@@ -86,11 +86,11 @@ export function useGeneration() {
   }, [streamFetch])
 
   const runStory = useCallback(async (material: string, dna?: string, medium?: string) => {
-    await streamFetch({ mode: "story", material: material.trim(), dna: dna || undefined, medium: medium || "auto", depth: depth || "standard", structure: structure || "auto" })
+    await streamFetch({ mode: "story", material: material.trim(), dna: dna || undefined, medium: medium || "auto" })
   }, [streamFetch])
 
   const runRetell = useCallback(async (material: string, framework?: string, structure?: string, emotion?: string, medium?: string) => {
-    await streamFetch({ mode: "retell", material: material.trim(), framework: framework || "auto", structure: structure || "auto", emotion: emotion || "auto", medium: medium || "auto", depth: depth || "standard", structure: structure || "auto" })
+    await streamFetch({ mode: "retell", material: material.trim(), framework: framework || "auto", structure: structure || "auto", emotion: emotion || "auto", medium: medium || "auto" })
   }, [streamFetch])
 
   const runHitDesigner = useCallback(async (topic: string, niche: string, material?: string, dna?: string) => {
