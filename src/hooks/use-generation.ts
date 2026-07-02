@@ -106,7 +106,7 @@ export function useGeneration() {
   }, [streamFetch])
 
   const runScriptCopy = useCallback(async (topic: string, contentType?: string, dna?: string) => {
-    await streamFetch({ mode: "script-copy", topic: topic.trim(), contentType: contentType || "auto", dna: dna || undefined, structure: structure || "auto" })
+    await streamFetch({ mode: "script-copy", topic: topic.trim(), contentType: contentType || "auto", dna: dna || undefined })
   }, [streamFetch])
 
   const runConvertScript = useCallback(async (topic: string, painPoint?: string, solution?: string, showMuscle?: string, evidencePosture?: string, dna?: string, ctaPreference?: string) => {
