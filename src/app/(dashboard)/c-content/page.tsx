@@ -46,7 +46,7 @@ export default function CContentPage() {
             <Button
               onClick={handleGenerate}
               disabled={!content.trim() || content.trim().length < 10}
-              className="w-full h-11 bg-amber-500 hover:bg-amber-600 text-white"
+              className="w-full h-11 bg-[#1a1a2e] hover:bg-[#2d2d4a] text-white rounded-lg font-medium shadow-sm"
             >
               <Coffee className="h-4 w-4 mr-2" />看看我能拍什么
             </Button>

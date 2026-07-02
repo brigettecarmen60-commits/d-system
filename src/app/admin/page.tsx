@@ -97,7 +97,7 @@ function InviteCodePanel() {
             <label className="text-xs text-muted-foreground mb-1 block">每张积分</label>
             <Input type="number" value={credits} onChange={e => setCredits(parseInt(e.target.value) || 50)} min={10} max={5000} step={10} className="w-24" />
           </div>
-          <Button onClick={generate} disabled={generating} className="bg-amber-500 hover:bg-amber-600 text-white">
+          <Button onClick={generate} disabled={generating} className="bg-[#1a1a2e] hover:bg-[#2d2d4a] text-white rounded-lg font-medium shadow-sm">
             <Plus className="h-4 w-4 mr-1" />
             {generating ? "生成中..." : copied === "all" ? "已生成并复制 ✓" : "生成"}
           </Button>
