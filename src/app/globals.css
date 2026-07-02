@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 @media (max-width: 768px) {
-  body {
+  html, body {
     -webkit-text-size-adjust: 100%;
+    overflow-x: hidden;
     color: #1a1a1a !important;
   }
   pre, code {
