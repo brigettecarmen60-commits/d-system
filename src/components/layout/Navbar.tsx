@@ -20,7 +20,7 @@ export function Navbar() {
     <header className="sticky top-0 z-40 border-b border-border/30 bg-card/70 backdrop-blur-md">
       <div className="flex h-14 items-center justify-between px-6">
         <div className="flex items-center gap-2 md:hidden">
-          <div className="h-7 w-7 rounded-md bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center">
+          <div className="h-7 w-7 rounded-md bg-amber-500 flex items-center justify-center">
             <Sparkles className="h-3.5 w-3.5 text-white" />
           </div>
           <span className="text-base font-bold">老D</span>

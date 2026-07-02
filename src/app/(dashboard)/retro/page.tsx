@@ -64,7 +64,7 @@ export default function RetroPage() {
           </TabsList>
 
           <TabsContent value="single">
-            <Card className="border border-gray-100 shadow-none mt-4">
+            <Card className="border shadow-sm mt-4">
               <CardContent className="p-6 space-y-4">
                 <p className="text-sm text-muted-foreground">输入已发布内容的数据，诊断哪里行、哪里不行、下次试什么。</p>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -78,7 +78,7 @@ export default function RetroPage() {
                 <Textarea placeholder={"漏斗数据（直接粘贴）：\n播放 71.1w\n2秒跳出率 32%\n5秒完播率 55%\n均播时长 42s\n完播率 18%\n点赞 2.4w\n评论 899\n转发 1.8w\n收藏 5251"} value={performance} onChange={e => setPerformance(e.target.value)} rows={5} className="resize-none text-sm" />
                 <Textarea placeholder={"转化数据（选填）：\n主页访问 3.2w\n涨粉 4200"} value={conversion} onChange={e => setConversion(e.target.value)} rows={3} className="resize-none text-sm" />
                 <Textarea placeholder={"评论（选填，带赞数）：\n👍128 终于有人说这个了！\n👍89 怎么买？"} value={comments} onChange={e => setComments(e.target.value)} rows={4} className="resize-none text-sm" />
-                <Button onClick={handleSingleRetro} disabled={!topic.trim() || !singlePurpose.trim()} className="w-full h-11 bg-emerald-500 hover:bg-emerald-600 text-white">
+                <Button onClick={handleSingleRetro} disabled={!topic.trim() || !singlePurpose.trim()} className="w-full h-11 bg-[#1a1a2e] hover:bg-[#2d2d4a] text-white rounded-lg font-medium shadow-sm">
                   <BarChart3 className="h-4 w-4 mr-2" />复盘这条
                 </Button>
               </CardContent>
@@ -86,14 +86,14 @@ export default function RetroPage() {
           </TabsContent>
 
           <TabsContent value="account">
-            <Card className="border border-gray-100 shadow-none mt-4">
+            <Card className="border shadow-sm mt-4">
               <CardContent className="p-6 space-y-4">
                 <p className="text-sm text-muted-foreground">提供账号目的、近期数据、历史最好/最差内容——系统对比判断方向对不对。</p>
                 <Input placeholder="账号目的 * （如：通过抖音获客卖课 / 建个人IP做咨询 / 泛流量接广告）" value={accountPurpose} onChange={e => setAccountPurpose(e.target.value)} />
                 <Textarea placeholder={"近期10条数据 * \n每条一行，粘数据就行：\n6/1 选题A — 播放5.2w 赞1200 评89\n6/3 选题B — 播放8k 赞150 评12\n..."} value={recent10} onChange={e => setRecent10(e.target.value)} rows={6} className="resize-none text-sm" />
                 <Textarea placeholder={"历史最好内容（选填）\n粘2-3条最好的，格式同上"} value={best} onChange={e => setBest(e.target.value)} rows={3} className="resize-none text-sm" />
                 <Textarea placeholder={"历史最差内容（选填）\n粘2-3条最差的，格式同上"} value={worst} onChange={e => setWorst(e.target.value)} rows={3} className="resize-none text-sm" />
-                <Button onClick={handleAccountRetro} disabled={!accountPurpose.trim() || !recent10.trim()} className="w-full h-11 bg-emerald-500 hover:bg-emerald-600 text-white">
+                <Button onClick={handleAccountRetro} disabled={!accountPurpose.trim() || !recent10.trim()} className="w-full h-11 bg-[#1a1a2e] hover:bg-[#2d2d4a] text-white rounded-lg font-medium shadow-sm">
                   <TrendingUp className="h-4 w-4 mr-2" />账号体检
                 </Button>
               </CardContent>
@@ -103,7 +103,7 @@ export default function RetroPage() {
       )}
 
       {phase === "generating" && (
-        <Card className="border border-gray-100 shadow-none">
+        <Card className="border shadow-sm">
           <CardContent className="py-16 text-center space-y-5">
             <Loader2 className="h-10 w-10 text-emerald-500 animate-spin mx-auto" />
             <p className="text-lg font-medium">{statusMessage || "分析中…"}</p>
@@ -114,7 +114,7 @@ export default function RetroPage() {
       )}
 
       {phase === "complete" && rawText && (
-        <Card className="border border-gray-100 shadow-none">
+        <Card className="border shadow-sm">
           <CardContent className="p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold">{activeTab === "single" ? "复盘报告" : "体检报告"}</h2>

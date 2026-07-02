@@ -60,7 +60,7 @@ export default function RetellPage() {
       <p className="text-muted-foreground">输入真实事件素材 → 六框架 × 脚本结构 → 重新讲好一个故事。不编造，只重组。</p>
 
       {phase === "idle" && (
-        <Card className="glass border-0 shadow-sm">
+        <Card className="border shadow-sm shadow-sm">
           <CardContent className="p-6 space-y-4">
             <div>
               <label className="text-sm font-medium mb-1.5 block">真实事件素材 <span className="text-red-500">*</span></label>
@@ -115,7 +115,7 @@ export default function RetellPage() {
       )}
 
       {phase === "generating" && (
-        <Card className="glass border-0 shadow-sm">
+        <Card className="border shadow-sm shadow-sm">
           <CardContent className="py-16 text-center space-y-5">
             <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto" />
             <p className="text-lg font-medium">{statusMessage}</p>
@@ -128,7 +128,7 @@ export default function RetellPage() {
 
       {phase === "complete" && rawText && (
         <div className="space-y-5">
-          <Card className="border border-gray-100 shadow-none">
+          <Card className="border shadow-sm">
             <CardContent className="p-6">
               <pre className="text-sm whitespace-pre-wrap font-sans leading-relaxed">{rawText}</pre>
             </CardContent>

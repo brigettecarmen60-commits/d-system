@@ -47,7 +47,7 @@ export function buildHotTopicPrompt(): string {
     "",
     "## 输出格式",
     "",
-    "先给热点摘要，再给改编后的选题：",
+    "只输出选题正文。不要打招呼。不要「好的」「收到」「作为热点专家」——你不是专家，你是选题工具。直接出内容。",
     "",
     "```",
     "🔥 热点雷达",
@@ -77,6 +77,8 @@ export function buildHotTopicPrompt(): string {
     "- 只改编搜索结果中确实存在的热点",
     "- 优先改编⭐⭐⭐（多平台共振）的热点",
     "- 低适配度的热点（赛道无关）宁可不改",
+    "- 禁止在输出中添加「写脚本」按钮文本——那是网页的事，不是你该输出的",
+    "- 禁止打招呼/确认/身份回应。直接出内容。",
   ].join("\n")
 }
 
@@ -88,6 +90,11 @@ export function buildHotTopicUserMessage(input: { niche: string; searchResults?:
     parts.push(input.searchResults)
   }
   parts.push("")
-  parts.push("拆解热点情绪→映射到赛道→生成5条改编选题。每一条标注热点来源和平台共振情况。不照搬热点，必须做赛道改编。")
+  parts.push("工作流程：")
+  parts.push("1. 先筛选——搜索结果里哪些热点可以改编到「" + input.niche + "」赛道？不是所有热点都能改。和赛道完全无关的→跳过。")
+  parts.push("2. 再改编——能改的热点，拆情绪→映射到赛道语境→生成选题。")
+  parts.push("3. 每条标注 [搜X] 来源编号。搜索结果里没有的热点=禁止编造。")
+  parts.push("")
+  parts.push("只输出热点雷达+5条改编选题。不打招呼。")
   return parts.join("\n")
 }

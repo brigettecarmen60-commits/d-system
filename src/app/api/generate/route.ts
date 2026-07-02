@@ -18,13 +18,16 @@ import { buildScriptPrompt, buildScriptUserMessage, buildScriptRoutingPrompt, bu
 import { buildPositioningPrompt, buildPositioningUserMessage } from "@/config/prompts/positioning"
 import { buildCContentPrompt, buildCContentUserMessage } from "@/config/prompts/c-content"
 import { buildRetroPrompt, buildRetroUserMessage, buildAccountRetroPrompt, buildAccountRetroUserMessage } from "@/config/prompts/retro"
-import { buildSeedingPrompt } from "@/config/prompts/seeding"
+import { buildSeedingPrompt, buildSeedingRoutingPrompt, buildSeedingRoutingUserMessage, buildSeedingGenPrompt, buildSeedingGenUserMessage } from "@/config/prompts/seeding"
 import { buildRetellPrompt, buildRetellUserMessage } from "@/config/prompts/retell"
 import { buildStoryPrompt, buildStoryRoutingPrompt, buildStoryRoutingUserMessage, buildStoryGenUserMessage } from "@/config/prompts/story"
 import { buildSprintPrompt, buildSprintUserMessage } from "@/config/prompts/sprint"
 import { buildWeiguiPrompt, buildWeiguiUserMessage } from "@/config/prompts/weigui"
 import { buildHotTopicPrompt, buildHotTopicUserMessage } from "@/config/prompts/hot-topic"
 import { buildScriptCopyPrompt, buildScriptCopyUserMessage } from "@/config/prompts/script"
+import { buildConvertScriptPrompt, buildConvertScriptRoutingPrompt, buildConvertScriptRoutingUserMessage, buildConvertScriptGenUserMessage } from "@/config/prompts/convert-script"
+import { buildSeriesPrompt, buildSeriesUserMessage } from "@/config/prompts/series"
+import { buildHitDesignerPrompt, buildHitDesignerUserMessage } from "@/config/prompts/hit-designer"
 import {
   extractAnglesFromOutput,
   extractCodesFromOutput,
@@ -124,6 +127,9 @@ export async function POST(req: NextRequest) {
     case "retell":            return runRetell(req, userId, body)
     case "story":            return runStory(req, userId, body)
     case "sprint":           return runSprint(req, userId, body)
+    case "series":           return runSeries(req, userId, body)
+    case "hit":              return runHitDesigner(req, userId, body)
+    case "convert-script":  return runConvertScript(req, userId, body)
     case "redian":           return runRedian(req, userId, body)
     case "weigui":           return runWeigui(req, userId, body)
     case "regen-mode-a":      return runRegenerate(req, userId, body, "mode-a")
@@ -429,7 +435,7 @@ async function runCContent(req: NextRequest, userId: string, body: any) {
 // ─── Script (R1) ─────────────────────────────────
 
 async function runScript(req: NextRequest, userId: string, body: any) {
-  const { topic, contentType, dna } = body
+  const { topic, contentType, dna, structure } = body
   if (!topic?.trim()) return Response.json({ error: "请选择选题" }, { status: 400 })
   return sse(req, async (send) => {
     // Pass 1: R1 路由判定
@@ -437,7 +443,7 @@ async function runScript(req: NextRequest, userId: string, body: any) {
     const routingModel = selectModel("topics") // R1
     const routingResult = await streamGenerate(
       buildScriptRoutingPrompt(),
-      buildScriptRoutingUserMessage({ topic: topic.trim() }),
+      buildScriptRoutingUserMessage({ topic: topic.trim(), structure }),
       routingModel,
       () => {},
       req.signal
@@ -452,7 +458,7 @@ async function runScript(req: NextRequest, userId: string, body: any) {
     const genModel = selectModel("intel") // V3
     const r = await streamGenerate(
       buildScriptPrompt(),
-      buildScriptGenUserMessage({ topic: topic.trim(), routing: routingJson, contentType, dna }),
+      buildScriptGenUserMessage({ topic: topic.trim(), routing: routingJson, contentType, dna, structure }),
       genModel,
       (t: string) => send({ type: "chunk", content: t }),
       req.signal
@@ -529,81 +535,95 @@ async function runRetell(req: NextRequest, userId: string, body: any) {
   })
 }
 
-// ─── Seeding (剧情种草) ─────────────────────────
+// ─── Seeding (剧情种草) 2-Pass ─────────────────────────
 
 async function runSeeding(req: NextRequest, userId: string, body: any) {
-  const { product, face, vow, audience, framework, emotion, embedDepth } = body
+  const { product, face, vow, audience, framework, emotion, embedDepth, storyteller, storytellerCustom, medium, depth, structure } = body
   if (!product?.trim()) return Response.json({ error: "请输入产品信息" }, { status: 400 })
   return sse(req, async (send) => {
-    send({ type: "status", phase: "seeding", message: "正在匹配框架，构建剧情…" })
+    // Pass 1: R1 路由判定
+    send({ type: "status", phase: "seeding", message: "R1 正在分析产品，匹配框架与技法…" })
+    const routingModel = selectModel("topics")
+    const routingResult = await streamGenerate(
+      buildSeedingRoutingPrompt(),
+      buildSeedingRoutingUserMessage({
+        product: product.trim(),
+        face, vow, audience,
+        framework: framework || "auto",
+        storyteller: storyteller || "auto",
+        storytellerCustom,
+        medium: medium || "auto",
+      }),
+      routingModel,
+      () => {},
+      req.signal
+    )
+    let routingJson = routingResult.fullText
+    try { JSON.parse(routingJson.match(/```json\s*([\s\S]*?)```/)?.[1] || routingJson) } catch {
+      routingJson = JSON.stringify({ framework: "凡人之旅", techniques: ["愚者的死磕"], structure: "救猫咪", storyteller: "everyman", medium: "口播", targetEmotion: "观众感受到一个普通人的真实和不容易", anomalyType: "行为异常" })
+    }
+
+    // Pass 2: V3 写脚本
+    send({ type: "status", phase: "seeding", message: "V3 正在写脚本…" })
     const genModel = selectModel("intel")
-
-    const frameworkNames: Record<string, string> = {
-      "time-entropy": "时间熵增与不可逆",
-      "unequal-exchange": "关系中的非等价交换",
-      "mirror-reconciliation": "镜像与和解",
-      "giant-mayfly": "巨物与蜉蝣",
-      "ordinary-journey": "凡人之旅",
-      "genuine-closure": "真诚的闭环",
-      "hidden-order": "隐秘的秩序",
-    }
-    const emotionNames: Record<string, string> = {
-      "warm": "温暖",
-      "release": "释然",
-      "laugh": "笑",
-      "surprise": "惊喜",
-      "regret-warm": "遗憾但温暖",
-      "anger-clarity": "愤怒后清醒",
-      "absurd-relief": "荒诞后释然",
-      "admiration": "向下兼容的仰视",
-      "loved-unseen": "被世界暗中爱着",
-      "fullness": "充盈——原来我一直被爱",
-    }
-    const embedDepthNames: Record<string, string> = {
-      "bg-prop": "浅：产品只入镜，不主讲。故事完全独立于产品成立。",
-      "narrative-carrier": "中：产品推动故事，但人是主角。产品最多3次，每次不超过2秒。",
-      "no-embed": "不提产品：故事完全不出现产品。只建立信任。观众因为信这个人而主动问。",
-    }
-
-    const frameworkLine = framework && framework !== "auto"
-      ? `【指定框架】${frameworkNames[framework] || framework}`
-      : "【框架】自动匹配——请根据产品的情绪时刻、假信念、观众感受三个问题自行判定，并在脚本开头声明所选框架。如果多次生成同一产品，请主动换一个框架试试，不要每次都选同一个。"
-    const emotionLine = emotion && emotion !== "auto"
-      ? `【指定情绪落点】${emotionNames[emotion] || emotion}`
-      : "【情绪落点】自动匹配——请在脚本开头声明所选情绪落点。如果多次生成同一产品，请主动换一个情绪试试。"
-
-    const embedDepthLine = embedDepth && embedDepthNames[embedDepth]
-      ? `【嵌入深度】${embedDepthNames[embedDepth]} 这是硬约束，必须严格遵守。`
-      : ""
-
-    const userMsg = [
-      `【产品】${product}`,
-      face ? `【人设脸谱】${face}` : "",
-      vow ? `【发愿】${vow}` : "",
-      audience ? `【目标人群】${audience}` : "",
-      frameworkLine,
-      emotionLine,
-      embedDepthLine,
-      "",
-      "## 输出要求",
-      "1. 最终输出只包含脚本本身——不要任何声明行、框架名、技法名、情绪标签。直接出脚本。",
-      "2. 脚本按时间轴：🎥画面 / 🎙️台词 / ⏱时长",
-      "3. 脚本末尾：【产品出现位置】第X秒，XX角色，X秒",
-      "4. 选框架、技法、情绪是你的内部决策过程——在脑内完成，不要写到输出里。",
-      "5. 如果选auto，同一产品多次生成时：换框架、换技法组合、换情绪落点。不要重复上一轮的组合。",
-    ].filter(Boolean).join("\n")
-
     const r = await streamGenerate(
-      buildSeedingPrompt(),
-      userMsg,
+      buildSeedingGenPrompt(),
+      buildSeedingGenUserMessage({
+        product: product.trim(),
+        routing: routingJson,
+        audience,
+        embedDepth: embedDepth || "narrative-carrier",
+        storytellerCustom,
+        medium: medium || "auto",
+        depth: depth || "standard",
+        structure: structure || "auto",
+      }),
       genModel,
       (t: string) => send({ type: "chunk", content: t }),
       req.signal
     )
 
-    const cost = getCreditCost("seeding").cost
+    const cost = getCreditCost("script").cost
+    await deductCredits(userId, cost)
+    send({ type: "done", usage: r.usage, cost: cost })
+  })
+}
+// ─── Series (V3) ────────────────────────────────
+
+async function runSeries(req: NextRequest, userId: string, body: any) {
+  const { niche, edge, dna } = body
+  if (!niche?.trim()) return Response.json({ error: "请输入赛道" }, { status: 400 })
+  const model = selectModel("intel")
+  return sse(req, async (send) => {
+    send({ type: "status", phase: "series", message: "扫描内容矿脉 → 找系列钩子 → 策划方向…" })
+    const r = await streamGenerate(
+      buildSeriesPrompt(),
+      buildSeriesUserMessage({ niche: niche.trim(), edge: edge.trim(), dna }),
+      model,
+      (t: string) => send({ type: "chunk", content: t }),
+      req.signal
+    )
+    const cost = getCreditCost("series").cost
     await deductCredits(userId, cost)
     send({ type: "done", usage: r.usage, cost })
+  })
+}
+
+// ─── Hit Designer (V3) ──────────────────────────
+
+async function runHitDesigner(req: NextRequest, userId: string, body: any) {
+  const { topic, niche, material, dna } = body
+  if (!niche?.trim() && !topic?.trim()) return Response.json({ error: "请输入赛道或选题" }, { status: 400 })
+  const model = selectModel("intel")
+  return sse(req, async (send) => {
+    send({ type: "status", phase: "hit", message: "找反差→推冲突→设计转发瞬间…" })
+    const r = await streamGenerate(
+      buildHitDesignerPrompt(),
+      buildHitDesignerUserMessage({ topic: topic?.trim(), niche, material, dna }),
+      model, (t: string) => send({ type: "chunk", content: t }), req.signal
+    )
+    await deductCredits(userId, getCreditCost("hit").cost)
+    send({ type: "done", usage: r.usage, cost: getCreditCost("hit").cost })
   })
 }
 
@@ -623,6 +643,44 @@ async function runSprint(req: NextRequest, userId: string, body: any) {
       req.signal
     )
     const cost = getCreditCost("sprint").cost
+    await deductCredits(userId, cost)
+    send({ type: "done", usage: r.usage, cost })
+  })
+}
+
+// ─── Convert Script (转化脚本，双pass) ────────────
+
+async function runConvertScript(req: NextRequest, userId: string, body: any) {
+  const { topic, painPoint, solution, showMuscle, evidencePosture, dna, ctaPreference } = body
+  if (!topic?.trim()) return Response.json({ error: "请输入选题" }, { status: 400 })
+  return sse(req, async (send) => {
+    // Pass 1: R1 路由判定
+    send({ type: "status", phase: "script", message: "正在分析选题，判定路由…" })
+    const routingModel = selectModel("topics")
+    const routingResult = await streamGenerate(
+      buildConvertScriptRoutingPrompt(),
+      buildConvertScriptRoutingUserMessage({ topic: topic.trim() }),
+      routingModel, () => {}, req.signal
+    )
+    let routingJson = routingResult.fullText
+    try { JSON.parse(routingJson.match(/```json\s*([\s\S]*?)```/)?.[1] || routingJson) } catch {
+      routingJson = JSON.stringify({ decisionNode: 2, showMuscle: "演示过程", toWho: "Solution-aware", narrativeStructure: "P.A.S.", emotionPath: "怀疑→信任", tone: "深夜聊天型", relationship: "一个踩过坑的人在跟你交底" })
+    }
+
+    // Pass 2: V3 写脚本
+    send({ type: "status", phase: "script", message: "正在写转化脚本…" })
+    const genModel = selectModel("intel")
+    const r = await streamGenerate(
+      buildConvertScriptPrompt(),
+      buildConvertScriptGenUserMessage({
+        topic: topic.trim(), routing: routingJson,
+        painPoint, solution, showMuscle, evidencePosture, dna, ctaPreference,
+      }),
+      genModel,
+      (t: string) => send({ type: "chunk", content: t }),
+      req.signal
+    )
+    const cost = getCreditCost("convert-script").cost
     await deductCredits(userId, cost)
     send({ type: "done", usage: r.usage, cost })
   })
@@ -673,16 +731,16 @@ async function runRedian(req: NextRequest, userId: string, body: any) {
   if (!niche?.trim() || niche.trim().length < 2) return Response.json({ error: "请输入赛道" }, { status: 400 })
   const model = selectModel("intel")
   return sse(req, async (send) => {
-    send({ type: "status", phase: "redian", message: "正在抓取多平台热点…" })
+    send({ type: "status", phase: "redian", message: "正在抓取当前全网热点…" })
 
-    // 搜索当前热点
+    // 先搜全网热点（不挂赛道词），再改编到赛道
     const [hot1, hot2] = await Promise.all([
-      searchWeb(`${niche} 热点 热搜 最新话题 趋势 2025`),
-      searchWeb(`${niche} 热门事件 社交媒体 爆款 2025`),
+      searchWeb("2025年6月 热搜 热点新闻 热门话题 社会事件"),
+      searchWeb("最近 爆款视频 热门话题 社交媒体 趋势"),
     ])
     const searchResults = [hot1, hot2].filter(Boolean).join("\n\n---\n\n")
     if (searchResults) {
-      send({ type: "status", phase: "redian", message: "热点抓取完成，正在改编为选题…" })
+      send({ type: "status", phase: "redian", message: "热点抓取完成，正在筛选可改编到赛道的话题…" })
     }
 
     const r = await streamGenerate(

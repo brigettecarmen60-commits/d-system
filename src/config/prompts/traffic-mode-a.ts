@@ -6,7 +6,7 @@ import { buildTrafficCorePrompt, buildTrafficCoreUserMessage, buildTrafficRoutin
 
 export function buildModeAPrompt(): string {
   return buildTrafficCorePrompt({
-    title: "# 老F纪实引擎 v3.0",
+    title: "# 纪实选题引擎",
     tagline: "从赛道里找到所有人都有但没被说透的共识，用真实物理证据接住它。行业=容器，人性=主菜。",
   })
 }

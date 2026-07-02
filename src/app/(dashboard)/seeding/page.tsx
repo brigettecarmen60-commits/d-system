@@ -41,15 +41,43 @@ const EMBED_DEPTHS = [
   { value: "no-embed", label: "不提产品：故事独立成立" },
 ]
 
+const STORYTELLERS = [
+  { value: "auto", label: "不指定（AI 自动判断）" },
+  { value: "everyman", label: "普通人 — 没光环、没背景、靠死磕硬扛。观众觉得'他也是我'" },
+  { value: "obsessive-expert", label: "较真的专家 — 对一件事钻到变态。观众觉得'他说的我信'" },
+  { value: "scarred-veteran", label: "踩过坑的老手 — 有伤痕、在交底。观众觉得'他在帮我'" },
+  { value: "truth-teller", label: "敢说真话的人 — 看见潜规则就拆穿。观众觉得'终于有人说了'" },
+  { value: "custom", label: "自定义 — 我自己描述讲故事的人" },
+]
+
 export default function SeedingPage() {
   const [product, setProduct] = useState("")
-  const [face, setFace] = useState("")
-  const [vow, setVow] = useState("")
+  const [storyteller, setStoryteller] = useState("")
+  const [storytellerCustom, setStorytellerCustom] = useState("")
   const [audience, setAudience] = useState("")
   const [framework, setFramework] = useState("auto")
   const [emotion, setEmotion] = useState("auto")
   const [embedDepth, setEmbedDepth] = useState("narrative-carrier")
+  const [medium, setMedium] = useState("auto")
+  const [depth, setDepth] = useState("standard")
+  const [structure, setStructure] = useState("auto")
   const { phase, statusMessage, rawText, error, runSeeding, reset } = useGeneration()
+
+  function handleGenerate(randomize = false) {
+    const st = storyteller === "custom" ? storytellerCustom : storyteller
+    runSeeding(
+      product,
+      st || undefined,
+      undefined, // vow — merged into storyteller
+      audience,
+      randomize ? "auto" : framework,
+      randomize ? "auto" : emotion,
+      embedDepth,
+      randomize ? "auto" : medium,
+      depth,
+      randomize ? "auto" : structure
+    )
+  }
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -64,6 +92,7 @@ export default function SeedingPage() {
       {phase === "idle" && (
         <Card>
           <CardContent className="p-6 space-y-4">
+            {/* 产品 */}
             <div>
               <label className="text-sm font-medium mb-1.5 block">产品 <span className="text-red-400">*</span></label>
               <Textarea
@@ -74,20 +103,33 @@ export default function SeedingPage() {
                 className="resize-none"
               />
             </div>
-            <div className="grid grid-cols-3 gap-3">
+
+            {/* 讲故事的人 + 目标人群 */}
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-sm font-medium mb-1.5 block">人设脸谱</label>
-                <Input placeholder="凡人之旅 / 技术狂魔 / …" value={face} onChange={(e) => setFace(e.target.value)} />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1.5 block">发愿</label>
-                <Input placeholder="守住底线 / 揭露真相 / …" value={vow} onChange={(e) => setVow(e.target.value)} />
+                <label className="text-sm font-medium mb-1.5 block">讲故事的人</label>
+                <Select value={storyteller} onValueChange={setStoryteller}>
+                  <SelectTrigger><SelectValue placeholder="选一个最像你的人…" /></SelectTrigger>
+                  <SelectContent>
+                    {STORYTELLERS.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {storyteller === "custom" && (
+                  <Input
+                    placeholder="比如：一个在城中村开理发店的单亲妈妈 / 一个被裁后决定做自己的前大厂员工"
+                    value={storytellerCustom}
+                    onChange={(e) => setStorytellerCustom(e.target.value)}
+                    className="mt-2"
+                  />
+                )}
               </div>
               <div>
                 <label className="text-sm font-medium mb-1.5 block">目标人群</label>
-                <Input placeholder="打工人 / 年轻妈妈 / …" value={audience} onChange={(e) => setAudience(e.target.value)} />
+                <Input placeholder="比如：25岁独居女生 / 新手爸妈 / 刚被裁的人" value={audience} onChange={(e) => setAudience(e.target.value)} />
               </div>
             </div>
+
+            {/* 框架 + 情绪 */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-sm font-medium mb-1.5 block">情绪框架</label>
@@ -108,31 +150,63 @@ export default function SeedingPage() {
                 </Select>
               </div>
             </div>
+
+            {/* 嵌入深度 */}
             <div>
-                <label className="text-sm font-medium mb-1.5 block">嵌入深度</label>
-                <Select value={embedDepth} onValueChange={setEmbedDepth}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {EMBED_DEPTHS.map(d => <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
+              <label className="text-sm font-medium mb-1.5 block">介质</label>
+              <Select value={medium} onValueChange={setMedium}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">自动判定</SelectItem>
+                  <SelectItem value="口播">口播型 — 对着镜头讲</SelectItem>
+                  <SelectItem value="Vlog">Vlog型 — 画面+旁白</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">脚本结构</label>
+              <Select value={structure} onValueChange={setStructure}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">自动判定</SelectItem>
+                  <SelectItem value="起承转合">起承转合</SelectItem>
+                  <SelectItem value="Harmon故事圈">Harmon故事圈</SelectItem>
+                  <SelectItem value="救猫咪">救猫咪 — 困境→转机→胜利</SelectItem>
+                  <SelectItem value="倒叙悬念">倒叙悬念 — 结局前置</SelectItem>
+                  <SelectItem value="时光机">时光机 — 旧物→闪回→升华</SelectItem>
+                  <SelectItem value="镜像共鸣">镜像共鸣 — 你是不是也…</SelectItem>
+                  <SelectItem value="悬疑盒子">悬疑盒子 — 钩子→线索→反转</SelectItem>
+                  <SelectItem value="滞后揭示链">滞后揭示链 — FW2→FW1→FW6→FW3</SelectItem>
+                  <SelectItem value="证据链叙事">证据链叙事</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">叙事深度</label>
+              <Select value={depth} onValueChange={setDepth}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="short">超短 — 单技法，极度压缩</SelectItem>
+                  <SelectItem value="standard">标准 — 双技法叠加</SelectItem>
+                  <SelectItem value="long">长篇 — 三技法完整弧线</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">嵌入深度</label>
+              <Select value={embedDepth} onValueChange={setEmbedDepth}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {EMBED_DEPTHS.map(d => <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="flex gap-3">
-              <Button onClick={() => runSeeding(product, face, vow, audience, framework, emotion, embedDepth)} disabled={!product.trim()} className="flex-1 h-11">
+              <Button onClick={() => handleGenerate(false)} disabled={!product.trim() || (storyteller === "custom" && !storytellerCustom.trim())} className="flex-1 h-11">
                 <Sparkles className="h-4 w-4 mr-2" />生成种草脚本
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setFramework("auto")
-                  setEmotion("auto")
-                  setEmbedDepth("narrative-carrier")
-                  runSeeding(product, face, vow, audience, "auto", "auto", "narrative-carrier")
-                }}
-                disabled={!product.trim()}
-                className="h-11"
-                title="随机框架+情绪"
-              >
+              <Button variant="outline" onClick={() => handleGenerate(true)} disabled={!product.trim() || (storyteller === "custom" && !storytellerCustom.trim())} className="h-11" title="随机框架+情绪">
                 <Shuffle className="h-4 w-4" />
               </Button>
             </div>

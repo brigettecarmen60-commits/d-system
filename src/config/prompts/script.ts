@@ -84,10 +84,10 @@ export function buildScriptPrompt(): string {
     "Product-aware(\"认识你但不确定\")→证据轰炸",
     "Most aware(\"快决定了\")→低摩擦CTA",
     "",
-    "#### 叙事结构 10选1",
-    "流量型(6)：预期违背(10)/认知对撞(2)/阵营对立(42)/信息缺口(25)/悬疑盒子(9)/A/B对照实验(31)",
-    "转化型(4)：P.A.S.(18)/F.A.B.利益(19)/风险逆转(40)/过程透明(34)",
-    "信任型 = 转化型管线去掉CTA。结尾从\"行动指令\"改为\"展示态度\"。",
+    "#### 叙事结构（仅文案驱动。框架驱动不需要结构——过程的戏剧性来自真实事件本身）",
+    "从以下28结构中选1：SCQA/认知对撞/黄金圈/类比降维/辩证二元/剥洋葱/英雄之旅/救猫咪/悬疑盒子/预期违背/倒叙悬念/平行时空/起承转合/Harmon故事圈/情绪过山车/替身宣泄/时光机/假如重来/镜像共鸣/PAS/FAB利益/参照锚点/信任阶梯/滞后揭示链/证据链叙事/信息缺口/阵营对立/A/B对照实验",
+    "流量型优先叙事剧情+情绪共鸣+逻辑重构。转化型优先说服转化。信任型=转化型去掉CTA。",
+    "**如果用户指定了结构**：严格用指定的。如果没指定：从28个中选最匹配选题的一个。",
     "",
     "#### 形式意识",
     "选题之后先想一秒：这个选题除了口播，还能用什么形式拍？",
@@ -191,15 +191,21 @@ export function buildScriptRoutingPrompt(): string {
   ].join("\n")
 }
 
-export function buildScriptRoutingUserMessage(input: { topic: string }): string {
-  return "【选题】" + input.topic + "\n\n只输出JSON路由决策。不写脚本。"
+export function buildScriptRoutingUserMessage(input: { topic: string; structure?: string }): string {
+  let msg = "【选题】" + input.topic
+  if (input.structure && input.structure !== "auto") {
+    msg += "\n\n【用户指定结构】" + input.structure + "——必须用这个结构，不要自己换。"
+  }
+  msg += "\n\n只输出JSON路由决策。不写脚本。"
+  return msg
 }
 
-export function buildScriptGenUserMessage(input: { topic: string; routing: string; dna?: string; contentType?: string }): string {
+export function buildScriptGenUserMessage(input: { topic: string; routing: string; dna?: string; contentType?: string; structure?: string }): string {
   const parts = ["【选题】" + input.topic]
   parts.push(""); parts.push("【路由决策】"); parts.push(input.routing)
   if (input.dna) { parts.push(""); parts.push("【DNA】"); parts.push(input.dna) }
   if (input.contentType && input.contentType !== "auto") parts.push("【目的】" + input.contentType)
+  if (input.structure && input.structure !== "auto") parts.push("【结构覆盖】" + input.structure + "——忽略路由中的结构，用这个。")
   parts.push("")
   parts.push("根据路由决策写脚本。开头激活六种认知异常之一。遵守0-1s Visual→1-2s Audio→2-3s钩住。转化型中段≥2个数字+1个诚实时刻。结尾闭环禁引评论。写完过AI腔扫描+呼吸检查。只输出🎬+🎙️脚本正文。")
   return parts.join("\n")
@@ -233,17 +239,15 @@ export function buildScriptCopyPrompt(): string {
     "- Product-aware(\"认识你但不确定\")→证据轰炸",
     "- Most aware(\"快决定了\")→低摩擦CTA",
     "",
-    "### 叙事结构",
-    "- 预期违背(10)：先建立预期，再打破",
-    "- 认知对撞(2)：两个矛盾的认知同时出现",
-    "- 阵营对立(42)：你站A还是B？",
-    "- 信息缺口(25)：你知道的vs你不知道的",
-    "- 悬疑盒子(9)：先给谜面，最后给谜底",
-    "- A/B对照实验(31)：对比产生说服力",
-    "- P.A.S.(18)：Problem→Agitate→Solve",
-    "- F.A.B.利益(19)：Feature→Advantage→Benefit",
-    "- 风险逆转(40)：做了最坏也不亏",
-    "- 过程透明(34)：展示你走过的路",
+    "### 叙事结构（28选1，自动匹配池）",
+    "",
+    "**逻辑重构（6）**：SCQA / 认知对撞 / 黄金圈 / 类比降维 / 辩证二元 / 剥洋葱",
+    "**叙事剧情（8）**：英雄之旅 / 救猫咪 / 悬疑盒子 / 预期违背 / 倒叙悬念 / 平行时空 / 起承转合 / Harmon故事圈",
+    "**情绪共鸣（5）**：情绪过山车 / 替身宣泄 / 时光机 / 假如重来 / 镜像共鸣",
+    "**说服转化（4）**：PAS / FAB利益 / 参照锚点 / 信任阶梯",
+    "**独有结构（5）**：滞后揭示链(FW2→FW1→FW6→FW3) / 证据链叙事 / 信息缺口 / 阵营对立 / A/B对照实验",
+    "**选结构原则**：流量型优先叙事剧情+情绪共鸣+逻辑重构。转化型优先说服转化。信任型=转化型去掉CTA。",
+    "**如果用户指定了结构**：严格用指定的结构，不要自己换。如果用户没指定：从28个中选最匹配选题的一个。",
     "",
     "### 情绪路径",
     "选定情绪A→B，整条文案的情绪弧线。流量型：落差拉满。转化型：精准打点不拉满。",

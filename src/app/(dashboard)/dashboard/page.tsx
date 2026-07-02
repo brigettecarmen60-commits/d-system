@@ -42,7 +42,7 @@ export default function DashboardPage() {
 
       {/* 积分 + 管线进度 */}
       <div className="grid gap-4 md:grid-cols-2">
-        <Card className="border border-gray-100 shadow-none">
+        <Card className="border shadow-sm">
           <CardContent className="p-5 space-y-3">
             <p className="text-sm font-medium text-gray-500">剩余积分</p>
             <div className="flex items-baseline gap-2">
@@ -53,7 +53,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-gray-100 shadow-none">
+        <Card className="border shadow-sm">
           <CardContent className="p-5 space-y-3">
             <p className="text-sm font-medium text-gray-500">管线进度</p>
             <div className="flex items-baseline gap-2">
@@ -92,7 +92,7 @@ export default function DashboardPage() {
             { href: "/sprint", icon: CalendarDays, label: "两周冲刺", desc: "Sprint规划" },
           ].map(item => (
             <Link key={item.href} href={item.href}>
-              <Card className="border border-gray-100 shadow-none hover:border-amber-200 hover:bg-amber-50/50 transition-colors cursor-pointer h-full">
+              <Card className="border shadow-sm hover:border-amber-200 hover:bg-amber-50/50 transition-colors cursor-pointer h-full">
                 <CardContent className="p-4">
                   <item.icon className="h-5 w-5 text-amber-500 mb-2" />
                   <p className="font-semibold text-sm">{item.label}</p>
@@ -108,7 +108,7 @@ export default function DashboardPage() {
       <div>
         <p className="text-sm font-medium text-gray-500 mb-3">最近动态</p>
         {activities.length === 0 ? (
-          <Card className="border border-gray-100 shadow-none">
+          <Card className="border shadow-sm">
             <CardContent className="py-12 text-center">
               <Clock className="h-8 w-8 text-gray-300 mx-auto mb-3" />
               <p className="text-sm text-muted-foreground">还没有活动记录</p>

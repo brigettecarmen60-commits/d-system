@@ -77,20 +77,28 @@ export function useGeneration() {
     await streamFetch({ mode: topicMode, niche: niche.trim(), ...extra })
   }, [streamFetch])
 
-  const runScript = useCallback(async (topic: string, contentType?: string, dna?: string) => {
-    await streamFetch({ mode: "script", topic: topic.trim(), contentType: contentType || "auto", dna: dna || undefined })
+  const runScript = useCallback(async (topic: string, contentType?: string, dna?: string, structure?: string) => {
+    await streamFetch({ mode: "script", topic: topic.trim(), contentType: contentType || "auto", dna: dna || undefined, structure: structure || "auto" })
   }, [streamFetch])
 
-  const runSeeding = useCallback(async (product: string, face?: string, vow?: string, audience?: string, framework?: string, emotion?: string, embedDepth?: string) => {
-    await streamFetch({ mode: "seeding", product: product.trim(), face: face || undefined, vow: vow || undefined, audience: audience || undefined, framework: framework || "auto", emotion: emotion || "auto", embedDepth: embedDepth || "narrative-carrier" })
+  const runSeeding = useCallback(async (product: string, face?: string, vow?: string, audience?: string, framework?: string, emotion?: string, embedDepth?: string, medium?: string, depth?: string, structure?: string) => {
+    await streamFetch({ mode: "seeding", product: product.trim(), face: face || undefined, vow: vow || undefined, audience: audience || undefined, framework: framework || "auto", emotion: emotion || "auto", embedDepth: embedDepth || "narrative-carrier", medium: medium || "auto", depth: depth || "standard", structure: structure || "auto" })
   }, [streamFetch])
 
   const runStory = useCallback(async (material: string, dna?: string, medium?: string) => {
-    await streamFetch({ mode: "story", material: material.trim(), dna: dna || undefined, medium: medium || "auto" })
+    await streamFetch({ mode: "story", material: material.trim(), dna: dna || undefined, medium: medium || "auto", depth: depth || "standard", structure: structure || "auto" })
   }, [streamFetch])
 
   const runRetell = useCallback(async (material: string, framework?: string, structure?: string, emotion?: string, medium?: string) => {
-    await streamFetch({ mode: "retell", material: material.trim(), framework: framework || "auto", structure: structure || "auto", emotion: emotion || "auto", medium: medium || "auto" })
+    await streamFetch({ mode: "retell", material: material.trim(), framework: framework || "auto", structure: structure || "auto", emotion: emotion || "auto", medium: medium || "auto", depth: depth || "standard", structure: structure || "auto" })
+  }, [streamFetch])
+
+  const runHitDesigner = useCallback(async (topic: string, niche: string, material?: string, dna?: string) => {
+    await streamFetch({ mode: "hit", topic: topic?.trim() || undefined, niche: niche?.trim() || undefined, material: material?.trim() || undefined, dna: dna || undefined })
+  }, [streamFetch])
+
+  const runSeries = useCallback(async (niche: string, edge: string, dna?: string) => {
+    await streamFetch({ mode: "series", niche: niche.trim(), edge: edge?.trim() || undefined, dna: dna || undefined })
   }, [streamFetch])
 
   const runSprint = useCallback(async (stage: string, goal: string, niche?: string, recentData?: string) => {
@@ -98,7 +106,11 @@ export function useGeneration() {
   }, [streamFetch])
 
   const runScriptCopy = useCallback(async (topic: string, contentType?: string, dna?: string) => {
-    await streamFetch({ mode: "script-copy", topic: topic.trim(), contentType: contentType || "auto", dna: dna || undefined })
+    await streamFetch({ mode: "script-copy", topic: topic.trim(), contentType: contentType || "auto", dna: dna || undefined, structure: structure || "auto" })
+  }, [streamFetch])
+
+  const runConvertScript = useCallback(async (topic: string, painPoint?: string, solution?: string, showMuscle?: string, evidencePosture?: string, dna?: string, ctaPreference?: string) => {
+    await streamFetch({ mode: "convert-script", topic: topic.trim(), painPoint: painPoint?.trim() || undefined, solution: solution?.trim() || undefined, showMuscle: showMuscle || "auto", evidencePosture: evidencePosture || "auto", dna: dna || undefined, ctaPreference: ctaPreference || "auto" })
   }, [streamFetch])
 
   const runWeigui = useCallback(async (scriptContent: string) => {
@@ -201,6 +213,6 @@ export function useGeneration() {
 
   return { phase, statusMessage, rawText, output, scriptId, tokens, usedModel, error, lastMode,
     isRegeneration, regenState,
-    runIntel, runTopics, runPositioning, runScript, runScriptCopy, runSeeding, runStory, runRetell, runSprint, runWeigui, runRetro, runAccountRetro, reset, parseTopics,
+    runIntel, runTopics, runPositioning, runSeries, runHitDesigner, runScript, runScriptCopy, runConvertScript, runSeeding, runStory, runRetell, runSprint, runWeigui, runRetro, runAccountRetro, reset, parseTopics,
     checkRegenState, runRegenerate, runColdRestart }
 }

@@ -88,7 +88,7 @@ export default function ScriptsPage() {
       {loading ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
-            <Card key={i} className="glass border-0">
+            <Card key={i} className="border shadow-sm">
               <CardContent className="p-6">
                 <Skeleton className="h-5 w-3/4 mb-3" />
                 <Skeleton className="h-4 w-full mb-2" />
@@ -98,7 +98,7 @@ export default function ScriptsPage() {
           ))}
         </div>
       ) : scripts.length === 0 ? (
-        <Card className="glass border-0 shadow-sm">
+        <Card className="border shadow-sm shadow-sm">
           <CardContent className="py-20 text-center">
             <div className="mx-auto h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-5">
               <FileText className="h-7 w-7 text-muted-foreground" />
@@ -117,7 +117,7 @@ export default function ScriptsPage() {
         <>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {scripts.map((script) => (
-              <Card key={script.id} className="glass border-0 shadow-sm hover:shadow-md smooth group cursor-pointer">
+              <Card key={script.id} className="border shadow-sm shadow-sm hover:shadow-md smooth group cursor-pointer">
                 <CardContent className="p-5">
                   <Link href={`/scripts/${script.id}`}>
                     <h3 className="font-semibold line-clamp-2 mb-3 group-hover:text-primary smooth leading-snug">

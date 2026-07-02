@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useGeneration } from "@/hooks/use-generation"
 import { PenLine, Loader2, Copy, RotateCcw, Sparkles, BarChart3, Shield, Check, AlertTriangle } from "lucide-react"
 import { recordActivity, recordPipelineStage } from "@/lib/activity"
+import { DnaPresetSelector } from "@/components/DnaPresetSelector"
 
 export default function ScriptPage() {
   const searchParams = useSearchParams()
@@ -22,6 +23,7 @@ export default function ScriptPage() {
   const [contentType, setContentType] = useState("auto")
   const [dna, setDna] = useState("")
   const [scriptMode, setScriptMode] = useState<"framework" | "copy">("framework")
+  const [structure, setStructure] = useState("auto")
 
   // 从定位页带过来的DNA
   if (useDna && !dna) {
@@ -80,7 +82,7 @@ export default function ScriptPage() {
     if (scriptMode === "copy") {
       runScriptCopy(topic, contentType, dna)
     } else {
-      runScript(topic, contentType, dna)
+      runScript(topic, contentType, dna, structure)
     }
   }
 
@@ -96,7 +98,7 @@ export default function ScriptPage() {
       <p className="text-muted-foreground">输入选题，老D 自动判定类型→to who→叙事结构→管线执行。</p>
 
       {phase === "idle" && (
-        <Card className="glass border-0 shadow-sm">
+        <Card className="border shadow-sm shadow-sm">
           <CardContent className="p-6 space-y-4">
             {/* 模式切换 */}
             <Tabs value={scriptMode} onValueChange={(v) => setScriptMode(v as "framework" | "copy")}>
@@ -115,19 +117,23 @@ export default function ScriptPage() {
               rows={3}
               className="text-base resize-none bg-white/50 dark:bg-slate-900/50 border-border/50"
             />
-            <Textarea
-              placeholder="传递卡 / DNA（可选）。粘贴定位系统生成的 DNA JSON，脚本将匹配人设、发愿、语气、三个钉子。"
-              value={dna}
-              onChange={(e) => setDna(e.target.value)}
-              rows={3}
-              className="text-sm resize-none bg-white/50 dark:bg-slate-900/50 border-border/50"
-            />
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">传递卡 / DNA（可选）</label>
+                <DnaPresetSelector dna={dna} onLoad={setDna} />
+              </div>
+              <Textarea
+                placeholder="粘贴定位系统生成的 DNA JSON。也可以从上方预设加载。"
+                value={dna}
+                onChange={(e) => setDna(e.target.value)}
+                rows={3}
+                className="text-sm resize-none bg-white/50 dark:bg-slate-900/50 border-border/50"
+              />
+            </div>
             <div>
-              <label className="text-sm font-medium mb-1.5 block">内容目的偏好</label>
+              <label className="text-sm font-medium mb-1.5 block">内容目的</label>
               <Select value={contentType} onValueChange={setContentType}>
-                <SelectTrigger className="bg-white/50 dark:bg-slate-900/50 border-border/50 w-48">
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="auto">自动判定</SelectItem>
                   <SelectItem value="流量型">流量型</SelectItem>
@@ -136,6 +142,45 @@ export default function ScriptPage() {
                 </SelectContent>
               </Select>
             </div>
+            {scriptMode === "copy" && (
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">叙事结构</label>
+              <Select value={structure} onValueChange={setStructure}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent className="max-h-80">
+                  <SelectItem value="auto">自动判定 — 28选1</SelectItem>
+                  <SelectItem value="SCQA">SCQA</SelectItem>
+                  <SelectItem value="认知对撞">认知对撞</SelectItem>
+                  <SelectItem value="黄金圈">黄金圈</SelectItem>
+                  <SelectItem value="类比降维">类比降维</SelectItem>
+                  <SelectItem value="辩证二元">辩证二元</SelectItem>
+                  <SelectItem value="剥洋葱">剥洋葱</SelectItem>
+                  <SelectItem value="英雄之旅">英雄之旅</SelectItem>
+                  <SelectItem value="救猫咪">救猫咪</SelectItem>
+                  <SelectItem value="悬疑盒子">悬疑盒子</SelectItem>
+                  <SelectItem value="预期违背">预期违背</SelectItem>
+                  <SelectItem value="倒叙悬念">倒叙悬念</SelectItem>
+                  <SelectItem value="平行时空">平行时空</SelectItem>
+                  <SelectItem value="起承转合">起承转合</SelectItem>
+                  <SelectItem value="Harmon故事圈">Harmon故事圈</SelectItem>
+                  <SelectItem value="情绪过山车">情绪过山车</SelectItem>
+                  <SelectItem value="替身宣泄">替身宣泄</SelectItem>
+                  <SelectItem value="时光机">时光机</SelectItem>
+                  <SelectItem value="假如重来">假如重来</SelectItem>
+                  <SelectItem value="镜像共鸣">镜像共鸣</SelectItem>
+                  <SelectItem value="PAS">PAS</SelectItem>
+                  <SelectItem value="FAB利益">FAB利益</SelectItem>
+                  <SelectItem value="参照锚点">参照锚点</SelectItem>
+                  <SelectItem value="信任阶梯">信任阶梯</SelectItem>
+                  <SelectItem value="滞后揭示链">滞后揭示链</SelectItem>
+                  <SelectItem value="证据链叙事">证据链叙事</SelectItem>
+                  <SelectItem value="信息缺口">信息缺口</SelectItem>
+                  <SelectItem value="阵营对立">阵营对立</SelectItem>
+                  <SelectItem value="A/B对照实验">A/B对照实验</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            )}
             <Button onClick={handleGenerate} disabled={!topic.trim()} className="w-full h-11 smooth">
               <Sparkles className="h-4 w-4 mr-2" />
               {scriptMode === "copy" ? "生成口播稿" : "生成脚本"}
@@ -145,7 +190,7 @@ export default function ScriptPage() {
       )}
 
       {phase === "generating" && (
-        <Card className="glass border-0 shadow-sm">
+        <Card className="border shadow-sm shadow-sm">
           <CardContent className="py-16 text-center space-y-5">
             <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto" />
             <p className="text-lg font-medium">{statusMessage}</p>
@@ -158,7 +203,7 @@ export default function ScriptPage() {
 
       {phase === "complete" && rawText && (
         <div className="space-y-5">
-          <Card className="border border-gray-100 shadow-none">
+          <Card className="border shadow-sm">
             <CardContent className="p-6">
               <pre className="text-sm whitespace-pre-wrap font-sans leading-relaxed">{rawText}</pre>
             </CardContent>
@@ -186,7 +231,7 @@ export default function ScriptPage() {
             </Card>
           )}
           {weiguiPhase === "complete" && weiguiResult && (
-            <Card className="border border-gray-100 shadow-none">
+            <Card className="border shadow-sm">
               <CardContent className="p-5">
                 <h3 className="font-bold text-sm flex items-center gap-2 mb-3"><Shield className="h-4 w-4 text-emerald-500" />违规检测报告</h3>
                 <pre className="text-sm whitespace-pre-wrap font-sans leading-relaxed bg-muted/20 rounded-lg p-4 max-h-80 overflow-y-auto">{weiguiResult}</pre>

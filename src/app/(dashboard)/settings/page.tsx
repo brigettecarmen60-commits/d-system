@@ -33,7 +33,7 @@ export default function SettingsPage() {
       <h1 className="text-2xl font-bold">设置</h1>
 
       {/* Profile */}
-      <Card className="glass border-0 shadow-sm">
+      <Card className="border shadow-sm shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <User className="h-4 w-4 text-cyan-500" />
@@ -60,7 +60,7 @@ export default function SettingsPage() {
       </Card>
 
       {/* Subscription & Usage */}
-      <Card className="glass border-0 shadow-sm">
+      <Card className="border shadow-sm shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Crown className="h-4 w-4 text-cyan-500" />

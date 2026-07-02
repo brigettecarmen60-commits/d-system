@@ -3,38 +3,38 @@
 export const PLANS = {
   TRIAL: {
     name: "试用版",
-    monthlyCredits: 50,
-    price: 0,            // 内测期间暂不定价
+    monthlyCredits: 150,
+    price: 0,
     isOneTime: true,
     features: [
-      "50 积分（够跑 1-2 次完整流程）",
+      "150 积分（够跑 3 次完整流程）",
       "全模式开放",
-      "DeepSeek V4 Pro 引擎",
+      "DeepSeek 引擎",
       "内测期间免费",
     ],
   },
   PRO: {
     name: "创作者版",
-    monthlyCredits: 300,
-    monthlyPrice: 0,     // 内测期间暂不定价
+    monthlyCredits: 600,
+    monthlyPrice: 0,
     yearlyPrice: 0,
     features: [
-      "300 积分/月（≈10 次完整流程）",
+      "600 积分/月（≈15 次完整流程）",
       "全模式开放",
-      "DeepSeek V4 Pro 引擎",
+      "DeepSeek 引擎",
       "热再生节省积分",
       "优先支持",
     ],
   },
   PLUS: {
     name: "工作室版",
-    monthlyCredits: 1500,
-    monthlyPrice: 0,     // 内测期间暂不定价
+    monthlyCredits: 2000,
+    monthlyPrice: 0,
     yearlyPrice: 0,
     features: [
-      "1500 积分/月（≈50 次完整流程）",
+      "2000 积分/月（≈50 次完整流程）",
       "全模式开放",
-      "DeepSeek V4 Pro 引擎",
+      "DeepSeek 引擎",
       "Claude 深度模式（3x 积分）",
       "专属支持通道",
       "API 接入",
@@ -62,8 +62,11 @@ export const CREDIT_COSTS = {
   "regen-trust":     { cost: 4, label: "信任选题-热再生", model: "deepseek-reasoner" },
   script:      { cost: 10, label: "脚本生成",        model: "deepseek-reasoner" },
   seeding:     { cost: 20, label: "剧情种草",        model: "deepseek-reasoner" },
+  series:      { cost: 5,  label: "系列策划",        model: "deepseek-chat" },
+  hit:         { cost: 5,  label: "爆款设计",        model: "deepseek-chat" },
   sprint:      { cost: 8,  label: "两周冲刺",        model: "deepseek-chat" },
   "script-copy": { cost: 8,  label: "纯文案脚本",    model: "deepseek-reasoner" },
+  "convert-script": { cost: 10, label: "转化脚本",   model: "deepseek-reasoner" },
   redian:      { cost: 6,  label: "热点选题",        model: "deepseek-chat" },
   weigui:      { cost: 3,  label: "违规检测",        model: "deepseek-chat" },
   // Claude 深度模式（未来）

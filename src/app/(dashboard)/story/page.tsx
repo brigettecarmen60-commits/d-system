@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useGeneration } from "@/hooks/use-generation"
 import { recordActivity } from "@/lib/activity"
 import { BookOpen, Loader2, Copy, RotateCcw, Sparkles } from "lucide-react"
+import { DnaPresetSelector } from "@/components/DnaPresetSelector"
 
 export default function StoryPage() {
   const [material, setMaterial] = useState("")
@@ -21,7 +22,7 @@ export default function StoryPage() {
       <p className="text-muted-foreground">输入真实经历 + 传递卡，老D 自动匹配六大情绪框架 → 生成人设故事脚本。</p>
 
       {phase === "idle" && (
-        <Card className="glass border-0 shadow-sm">
+        <Card className="border shadow-sm shadow-sm">
           <CardContent className="p-6 space-y-4">
             <div>
               <label className="text-sm font-medium mb-1.5 block">真实故事素材 <span className="text-red-500">*</span></label>
@@ -34,13 +35,19 @@ export default function StoryPage() {
               />
               <p className="text-xs text-muted-foreground mt-1">越具体越好——时间、地点、数字、对话、情绪最强烈的那个时刻。</p>
             </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">传递卡 / DNA（可选）</label>
+                <DnaPresetSelector dna={dna} onLoad={setDna} />
+              </div>
             <Textarea
-              placeholder="传递卡 / DNA（可选）。粘贴定位系统生成的 DNA JSON，故事将匹配人设、发愿、语气。"
+              placeholder="粘贴定位系统生成的 DNA JSON。也可以从上方预设加载。"
               value={dna}
               onChange={(e) => setDna(e.target.value)}
               rows={3}
               className="text-sm resize-none bg-white/50 dark:bg-slate-900/50 border-border/50"
             />
+            </div>
             <div>
               <label className="text-sm font-medium mb-1.5 block">介质偏好</label>
               <Select value={medium} onValueChange={setMedium}>
@@ -62,7 +69,7 @@ export default function StoryPage() {
       )}
 
       {phase === "generating" && (
-        <Card className="glass border-0 shadow-sm">
+        <Card className="border shadow-sm shadow-sm">
           <CardContent className="py-16 text-center space-y-5">
             <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto" />
             <p className="text-lg font-medium">{statusMessage}</p>
@@ -75,7 +82,7 @@ export default function StoryPage() {
 
       {phase === "complete" && rawText && (
         <div className="space-y-5">
-          <Card className="border border-gray-100 shadow-none">
+          <Card className="border shadow-sm">
             <CardContent className="p-6">
               <pre className="text-sm whitespace-pre-wrap font-sans leading-relaxed">{rawText}</pre>
             </CardContent>

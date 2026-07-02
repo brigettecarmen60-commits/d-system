@@ -149,7 +149,7 @@ export default function PositioningPage() {
 
       {/* ====== STEP 1: 基本情况 ====== */}
       {phase === "idle" && step === 1 && (
-        <Card className="border border-gray-100 shadow-none">
+        <Card className="border shadow-sm">
           <CardContent className="p-6 space-y-5">
             <p className="text-xs text-gray-400 uppercase tracking-wider">Phase 0 · 前置判断</p>
             <div>
@@ -183,7 +183,7 @@ export default function PositioningPage() {
 
       {/* ====== STEP 2: 优势与投入 ====== */}
       {phase === "idle" && step === 2 && (
-        <Card className="border border-gray-100 shadow-none">
+        <Card className="border shadow-sm">
           <CardContent className="p-6 space-y-5">
             <p className="text-xs text-gray-400 uppercase tracking-wider">Phase 1 · 商业模式定盘</p>
             <div>
@@ -220,7 +220,7 @@ export default function PositioningPage() {
 
       {/* ====== STEP 3: 灵魂挖掘 ====== */}
       {phase === "idle" && step === 3 && (
-        <Card className="border border-gray-100 shadow-none">
+        <Card className="border shadow-sm">
           <CardContent className="p-6 space-y-5">
             <p className="text-xs text-gray-400 uppercase tracking-wider">Phase 2 · 灵魂与特性放大</p>
             <div>
@@ -270,7 +270,7 @@ export default function PositioningPage() {
 
       {/* ====== STEP 4: 差异化与角色 ====== */}
       {phase === "idle" && step === 4 && (
-        <Card className="border border-gray-100 shadow-none">
+        <Card className="border shadow-sm">
           <CardContent className="p-6 space-y-5">
             <p className="text-xs text-gray-400 uppercase tracking-wider">Phase 3 · 稀缺性与基因打包</p>
             <div>
@@ -312,7 +312,7 @@ export default function PositioningPage() {
       {(phase === "generating" || phase === "complete" || phase === "error") && (
         <>
           {phase === "generating" && (
-            <Card className="border border-gray-100 shadow-none">
+            <Card className="border shadow-sm">
               <CardContent className="py-16 text-center space-y-5">
                 <Loader2 className="h-10 w-10 animate-spin mx-auto text-gray-400" />
                 <p className="text-lg font-medium text-gray-500">{statusMessage || "系统思考中，请稍候…"}</p>

@@ -20,7 +20,7 @@ export default function AnalyzePage() {
       <p className="text-sm text-muted-foreground">六点雷达扫描：钱·坑·人·局·流·判。自动搜索真实行业数据，给结论不给废话。</p>
 
       {phase === "idle" && (
-        <Card className="border border-gray-100 shadow-none">
+        <Card className="border shadow-sm">
           <CardContent className="p-6 space-y-4">
             <Textarea
               placeholder="输入赛道，比如：互联网保险、新能源汽车维修、职场成长培训…
@@ -32,7 +32,7 @@ export default function AnalyzePage() {
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); runIntel(niche) } }}
             />
             <Button onClick={() => runIntel(niche)} disabled={!niche.trim() || niche.trim().length < 2}
-              className="w-full h-11 bg-black text-white hover:bg-black/90 rounded-full">
+              className="w-full h-11 bg-[#1a1a2e] hover:bg-[#2d2d4a] text-white rounded-lg font-medium shadow-sm">
               <Search className="h-4 w-4 mr-2" />开始分析
             </Button>
           </CardContent>
@@ -40,7 +40,7 @@ export default function AnalyzePage() {
       )}
 
       {phase === "generating" && (
-        <Card className="border border-gray-100 shadow-none">
+        <Card className="border shadow-sm">
           <CardContent className="py-16 text-center space-y-5">
             <Loader2 className="h-10 w-10 animate-spin mx-auto text-muted-foreground" />
             <p className="text-lg font-medium text-muted-foreground">{statusMessage}</p>
@@ -56,7 +56,7 @@ export default function AnalyzePage() {
 
       {phase === "complete" && (
         <div className="space-y-4">
-          <Card className="border border-gray-100 shadow-none">
+          <Card className="border shadow-sm">
             <CardContent className="p-6">
               <pre className="text-sm whitespace-pre-wrap font-sans leading-relaxed">{rawText}</pre>
             </CardContent>

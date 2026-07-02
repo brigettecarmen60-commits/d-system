@@ -73,7 +73,7 @@ export default function TopicsPage() {
       <h1 className="text-2xl font-bold flex items-center gap-2"><Lightbulb className="h-6 w-6 text-amber-500" />选题生成</h1>
 
       {phase === "idle" && (
-        <Card className="glass border-0 shadow-sm">
+        <Card className="border shadow-sm shadow-sm">
           <CardContent className="p-6 space-y-4">
             <Textarea
               placeholder="输入赛道，比如：企业财税、家庭教育…
@@ -109,7 +109,7 @@ export default function TopicsPage() {
             <Button
               onClick={handleGenerate}
               disabled={!niche.trim() || niche.trim().length < 2}
-              className="w-full h-11 bg-amber-500 hover:bg-amber-600 text-white smooth"
+              className="w-full h-11 bg-[#1a1a2e] hover:bg-[#2d2d4a] text-white rounded-lg font-medium shadow-sm smooth"
             >
               <mode.icon className="h-4 w-4 mr-2" />
               生成{mode.label}选题
@@ -119,7 +119,7 @@ export default function TopicsPage() {
       )}
 
       {phase === "generating" && (
-        <Card className="glass border-0 shadow-sm">
+        <Card className="border shadow-sm shadow-sm">
           <CardContent className="py-16 text-center space-y-5">
             <Loader2 className="h-10 w-10 text-amber-500 animate-spin mx-auto" />
             <p className="text-lg font-medium">{statusMessage}</p>
@@ -152,7 +152,7 @@ export default function TopicsPage() {
 
           <div className="grid gap-3">
             {topics.map((t, i) => (
-              <Card key={i} className="glass border-0 shadow-sm group">
+              <Card key={i} className="border shadow-sm shadow-sm group">
                 <CardContent className="p-4 space-y-2">
                   <h3 className="font-semibold leading-snug">{t.title}</h3>
                   {t.detail && <p className="text-sm text-muted-foreground leading-relaxed">{t.detail}</p>}
@@ -169,7 +169,7 @@ export default function TopicsPage() {
           <div className="flex items-center justify-center gap-3 pt-4 border-t">
             {regenState?.exists ? (
               <>
-                <Button onClick={handleRegenerate} className="bg-amber-500 hover:bg-amber-600 text-white">
+                <Button onClick={handleRegenerate} className="bg-[#1a1a2e] hover:bg-[#2d2d4a] text-white rounded-lg font-medium shadow-sm">
                   <Zap className="h-4 w-4 mr-2" />热再生（换一批）
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => runColdRestart(niche, activeMode)}><RotateCcw className="h-3.5 w-3.5 mr-1" />重新分析</Button>

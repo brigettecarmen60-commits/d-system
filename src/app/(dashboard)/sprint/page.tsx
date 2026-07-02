@@ -48,7 +48,7 @@ export default function SprintPage() {
       <p className="text-sm text-muted-foreground">Sprint制运营规划。不预测未来，设计学习速度。不做90天日历——那第3天就会作废。</p>
 
       {phase === "idle" && (
-        <Card className="border border-gray-100 shadow-none">
+        <Card className="border shadow-sm">
           <CardContent className="p-6 space-y-4">
             {/* 阶段选择 */}
             <div>
@@ -94,7 +94,7 @@ export default function SprintPage() {
             />
 
             <Button onClick={handleGenerate} disabled={!stage || !goal.trim()}
-              className="w-full h-11 bg-indigo-500 hover:bg-indigo-600 text-white">
+              className="w-full h-11 bg-[#1a1a2e] hover:bg-[#2d2d4a] text-white rounded-lg font-medium shadow-sm">
               <CalendarDays className="h-4 w-4 mr-2" />生成 Sprint 规划
             </Button>
           </CardContent>
@@ -102,7 +102,7 @@ export default function SprintPage() {
       )}
 
       {phase === "generating" && (
-        <Card className="border border-gray-100 shadow-none">
+        <Card className="border shadow-sm">
           <CardContent className="py-16 text-center space-y-5">
             <Loader2 className="h-10 w-10 text-indigo-500 animate-spin mx-auto" />
             <p className="text-lg font-medium">{statusMessage}</p>
@@ -118,7 +118,7 @@ export default function SprintPage() {
 
       {phase === "complete" && rawText && (
         <div className="space-y-4">
-          <Card className="border border-gray-100 shadow-none">
+          <Card className="border shadow-sm">
             <CardContent className="p-6">
               <pre className="text-sm whitespace-pre-wrap font-sans leading-relaxed">{rawText}</pre>
             </CardContent>

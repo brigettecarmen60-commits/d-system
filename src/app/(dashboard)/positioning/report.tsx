@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Copy, Check, Download, Lightbulb, PenLine } from "lucide-react"
+import { DnaPresetSelector } from "@/components/DnaPresetSelector"
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { downloadMarkdown } from "@/lib/utils"
@@ -53,7 +54,7 @@ export function PositioningReport({ rawText, niche }: { rawText: string; niche: 
   if (!card) {
     // Fallback: show raw
     return (
-      <Card className="border border-gray-100 shadow-none">
+      <Card className="border shadow-sm">
         <CardContent className="p-6">
           <pre className="text-sm whitespace-pre-wrap font-sans leading-relaxed">{rawText}</pre>
         </CardContent>
@@ -64,7 +65,7 @@ export function PositioningReport({ rawText, niche }: { rawText: string; niche: 
   return (
     <div className="space-y-4">
       {/* 战略卡 */}
-      <Card className="border border-gray-100 shadow-none">
+      <Card className="border shadow-sm">
         <CardContent className="p-6 space-y-4">
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-bold">一页战略卡</h2>
@@ -103,6 +104,7 @@ export function PositioningReport({ rawText, niche }: { rawText: string; niche: 
               <p className="text-xs text-gray-500">复制下面这段，粘贴到选题生成页面的「DNA/定位」输入框中</p>
             </div>
             <div className="flex gap-2 shrink-0">
+              <DnaPresetSelector dna={dna} onLoad={(c) => {}} />
               <Button size="sm" onClick={copyDNA} className="bg-black text-white hover:bg-black/90">
                 {copied ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
                 {copied ? "已复制" : "一键复制 DNA"}
@@ -127,7 +129,7 @@ export function PositioningReport({ rawText, niche }: { rawText: string; niche: 
       </div>
 
       {/* 详细报告 — 折叠 */}
-      <Card className="border border-gray-100 shadow-none">
+      <Card className="border shadow-sm">
         <CardContent className="p-0">
           <details className="group">
             <summary className="px-5 py-3 text-sm text-gray-500 cursor-pointer hover:text-gray-700 select-none">

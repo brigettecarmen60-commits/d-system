@@ -32,7 +32,7 @@ export default function CContentPage() {
       </p>
 
       {phase === "idle" && (
-        <Card className="border border-gray-100 shadow-none">
+        <Card className="border shadow-sm">
           <CardContent className="p-6 space-y-4">
             <Textarea
               placeholder={`随便写，想到什么写什么。比如：
@@ -55,7 +55,7 @@ export default function CContentPage() {
       )}
 
       {phase === "generating" && (
-        <Card className="border border-gray-100 shadow-none">
+        <Card className="border shadow-sm">
           <CardContent className="py-16 text-center space-y-5">
             <Loader2 className="h-10 w-10 text-amber-500 animate-spin mx-auto" />
             <p className="text-lg font-medium text-gray-500">{statusMessage || "正在帮你看…"}</p>
@@ -67,7 +67,7 @@ export default function CContentPage() {
 
       {phase === "complete" && rawText && (
         <div className="space-y-4">
-          <Card className="border border-gray-100 shadow-none">
+          <Card className="border shadow-sm">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-bold">你的内容方向</h2>
@@ -83,7 +83,7 @@ export default function CContentPage() {
             </CardContent>
           </Card>
 
-          <Card className="border border-gray-100 shadow-none bg-gray-50">
+          <Card className="border shadow-sm bg-gray-50">
             <CardContent className="p-4 flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">想认真做一个IP？</p>
