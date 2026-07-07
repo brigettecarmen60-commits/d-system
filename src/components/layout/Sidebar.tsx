@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Search, Lightbulb, PenLine, FileText, Settings, Sparkles, Compass, Ticket, Loader2, Shield, BarChart3, Coffee, Camera, BookOpen, HelpCircle, LayoutDashboard, CalendarDays, RefreshCw, Target, Film, Flame } from "lucide-react"
+import { Search, Shuffle, Lightbulb, PenLine, FileText, Settings, Sparkles, Compass, Ticket, Loader2, Shield, BarChart3, Coffee, Camera, BookOpen, HelpCircle, LayoutDashboard, CalendarDays, RefreshCw, Target, Film, Flame } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Input } from "@/components/ui/input"
 
@@ -26,6 +26,7 @@ const navGroups = [
     items: [
       { title: "系列策划", href: "/series", icon: Film },
       { title: "爆款设计", href: "/hit", icon: Flame },
+      { title: "Traffic OS", href: "/traffic-os", icon: Shuffle },
       { title: "普通人挖掘", href: "/c-content", icon: Coffee },
       { title: "选题生成", href: "/topics", icon: Lightbulb },
     ],

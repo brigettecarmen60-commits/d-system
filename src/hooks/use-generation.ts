@@ -93,6 +93,10 @@ export function useGeneration() {
     await streamFetch({ mode: "retell", material: material.trim(), framework: framework || "auto", structure: structure || "auto", emotion: emotion || "auto", medium: medium || "auto" })
   }, [streamFetch])
 
+  const runTrafficOS = useCallback(async (niche: string, techniques: string) => {
+    await streamFetch({ mode: "traffic-os", niche: niche.trim(), techniques })
+  }, [streamFetch])
+
   const runHitDesigner = useCallback(async (topic: string, niche: string, material?: string, dna?: string) => {
     await streamFetch({ mode: "hit", topic: topic?.trim() || undefined, niche: niche?.trim() || undefined, material: material?.trim() || undefined, dna: dna || undefined })
   }, [streamFetch])
@@ -213,6 +217,6 @@ export function useGeneration() {
 
   return { phase, statusMessage, rawText, output, scriptId, tokens, usedModel, error, lastMode,
     isRegeneration, regenState,
-    runIntel, runTopics, runPositioning, runSeries, runHitDesigner, runScript, runScriptCopy, runConvertScript, runSeeding, runStory, runRetell, runSprint, runWeigui, runRetro, runAccountRetro, reset, parseTopics,
+    runIntel, runTopics, runPositioning, runSeries, runHitDesigner, runTrafficOS, runScript, runScriptCopy, runConvertScript, runSeeding, runStory, runRetell, runSprint, runWeigui, runRetro, runAccountRetro, reset, parseTopics,
     checkRegenState, runRegenerate, runColdRestart }
 }

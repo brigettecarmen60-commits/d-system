@@ -27,6 +27,7 @@ import { buildHotTopicPrompt, buildHotTopicUserMessage } from "@/config/prompts/
 import { buildScriptCopyPrompt, buildScriptCopyUserMessage } from "@/config/prompts/script"
 import { buildConvertScriptPrompt, buildConvertScriptRoutingPrompt, buildConvertScriptRoutingUserMessage, buildConvertScriptGenUserMessage } from "@/config/prompts/convert-script"
 import { buildSeriesPrompt, buildSeriesUserMessage } from "@/config/prompts/series"
+import { buildTrafficOSPrompt, buildTrafficOSUserMessage } from "@/config/prompts/traffic-os"
 import { buildHitDesignerPrompt, buildHitDesignerUserMessage } from "@/config/prompts/hit-designer"
 import {
   extractAnglesFromOutput,
@@ -129,6 +130,7 @@ export async function POST(req: NextRequest) {
     case "sprint":           return runSprint(req, userId, body)
     case "series":           return runSeries(req, userId, body)
     case "hit":              return runHitDesigner(req, userId, body)
+    case "traffic-os":        return runTrafficOS(req, userId, body)
     case "convert-script":  return runConvertScript(req, userId, body)
     case "redian":           return runRedian(req, userId, body)
     case "weigui":           return runWeigui(req, userId, body)
@@ -609,6 +611,19 @@ async function runSeries(req: NextRequest, userId: string, body: any) {
   })
 }
 
+// ─── Traffic OS (V3) ──────────────────────────
+
+async function runTrafficOS(req: NextRequest, userId: string, body: any) {
+  const { niche, techniques } = body
+  if (!niche?.trim() || !techniques?.trim()) return Response.json({ error: "请输入赛道并选择5个技法" }, { status: 400 })
+  return sse(req, async (send) => {
+    send({ type: "status", phase: "traffic-os", message: "技法碰撞中…" })
+    const r = await streamGenerate(buildTrafficOSPrompt(), buildTrafficOSUserMessage({ niche: niche.trim(), techniques }), selectModel("intel"), (t: string) => send({ type: "chunk", content: t }), req.signal)
+    await deductCredits(userId, getCreditCost("traffic-os").cost)
+    send({ type: "done", usage: r.usage, cost: getCreditCost("traffic-os").cost })
+  })
+}
+
 // ─── Hit Designer (V3) ──────────────────────────
 
 async function runHitDesigner(req: NextRequest, userId: string, body: any) {
@@ -626,6 +641,7 @@ async function runHitDesigner(req: NextRequest, userId: string, body: any) {
     send({ type: "done", usage: r.usage, cost: getCreditCost("hit").cost })
   })
 }
+
 
 // ─── Sprint (V3) ────────────────────────────────
 
