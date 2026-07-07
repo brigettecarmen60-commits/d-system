@@ -27,7 +27,7 @@ import { buildHotTopicPrompt, buildHotTopicUserMessage } from "@/config/prompts/
 import { buildScriptCopyPrompt, buildScriptCopyUserMessage } from "@/config/prompts/script"
 import { buildConvertScriptPrompt, buildConvertScriptRoutingPrompt, buildConvertScriptRoutingUserMessage, buildConvertScriptGenUserMessage } from "@/config/prompts/convert-script"
 import { buildSeriesPrompt, buildSeriesUserMessage } from "@/config/prompts/series"
-import { buildStep1Prompt, buildStep2Prompt, buildStep3Prompt } from "@/config/prompts/traffic-os"
+import { buildTrafficOSPrompt } from "@/config/prompts/traffic-os"
 import { buildHitDesignerPrompt, buildHitDesignerUserMessage } from "@/config/prompts/hit-designer"
 import {
   extractAnglesFromOutput,
@@ -668,27 +668,24 @@ async function runTrafficOS(req: NextRequest, userId: string, body: any) {
   const model = selectModel("intel")
 
   return sse(req, async (send) => {
-    // Step 1: 拆赛道 + 联想词
+    // 全流程一步：AI走拆解→联想词→动机→碰撞，代码只负责抽技法
     send({ type: "status", phase: "traffic-os", message: "拆解赛道…" })
-    const s1 = await streamGenerate(buildStep1Prompt(), "赛道：" + niche.trim(), model, () => {}, req.signal)
 
-    // Step 2: 判动机（AI只判断动机，不选技法）
-    send({ type: "status", phase: "traffic-os", message: "判断消费动机…" })
-    const s2 = await streamGenerate(buildStep2Prompt(), "赛道：" + niche.trim() + "\n\n" + s1.fullText, model, () => {}, req.signal)
-    // 从s2输出中提取动机名
-    const motives = s2.fullText.split(/[,，\n]/).map(s => s.trim()).filter(s => MOTIVE_POOLS[s])
+    // 先判动机（小prompt，快速出）
+    const sMotives = await streamGenerate(
+      "判断赛道触发哪3-5种消费动机（见闻/打脸/弑神/感动/窥视/答案/好奇/认可/镜子/逃避/参与/审判/治愈/解压/惊喜/链接/优越/轻松）。只输出动机名。",
+      "赛道：" + niche.trim(), model, () => {}, req.signal)
+    const motives = sMotives.fullText.split(/[,，\n]/).map((s: string) => s.trim()).filter((s: string) => MOTIVE_POOLS[s])
 
-    // 代码抽技法（判断力在规则里）
+    // 代码抽技法
     const picked = pickTechs(motives, prevSet)
-    console.log("motives:", motives, "picked:", picked)
 
-    // Step 3: 碰撞输出（AI只做碰撞）
-    send({ type: "status", phase: "traffic-os", message: "技法×联想词碰撞…" })
-    let s3Input = "赛道：" + niche.trim() + "\n\n" + s1.fullText + "\n指定技法编号：" + picked.join(", ")
-    if (prevSet.size > 0) s3Input = "🚫上批用了[" + [...prevSet].join(',') + "]，这批是全新编号\n" + s3Input
-    const s3 = await streamGenerate(buildStep3Prompt(), s3Input, model, (t: string) => send({ type: "chunk", content: t }), req.signal)
+    // 全流程碰撞（拆解+联想词+碰撞一起出，展示推理）
+    send({ type: "status", phase: "traffic-os", message: "技法碰撞中…" })
+    const userMsg = "赛道：" + niche.trim() + "\n指定技法编号：" + picked.join(", ")
+    const result = await streamGenerate(buildTrafficOSPrompt(), userMsg, model, (t: string) => send({ type: "chunk", content: t }), req.signal)
     await deductCredits(userId, getCreditCost("traffic-os").cost)
-    send({ type: "done", usage: s3.usage, cost: getCreditCost("traffic-os").cost })
+    send({ type: "done", usage: result.usage, cost: getCreditCost("traffic-os").cost })
   })
 }
 
