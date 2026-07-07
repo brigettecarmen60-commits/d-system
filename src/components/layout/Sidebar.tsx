@@ -27,7 +27,7 @@ const navGroups = [
     items: [
       { title: "系列策划", href: "/series", icon: Film },
       { title: "共识挖掘", href: "/hit", icon: Flame },
-      { title: "Traffic OS", href: "/traffic-os", icon: Shuffle },
+      { title: "创意实验室", href: "/traffic-os", icon: Shuffle },
       { title: "选题生成", href: "/topics", icon: Lightbulb },
     ],
   },
