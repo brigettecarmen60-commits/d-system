@@ -22,7 +22,7 @@ export default function TrafficOSPage() {
         <Card className="border shadow-sm"><CardContent className="p-4 space-y-3">
           <label className="text-sm font-medium">赛道 <span className="text-red-400">*</span></label>
           <Textarea placeholder="记账报税 / 陪诊服务 / 少儿体能 / 二手车检测" value={niche} onChange={e => setNiche(e.target.value)} rows={1} className="resize-none" />
-          <Button onClick={handleGenerate} disabled={!niche.trim()} className="w-full h-11 bg-purple-500 hover:bg-purple-600 text-white rounded-lg font-medium shadow-sm"><Shuffle className="h-4 w-4 mr-2" />碰撞生成 5 个方向</Button>
+          <Button onClick={() => handleGenerate()} disabled={!niche.trim()} className="w-full h-11 bg-purple-500 hover:bg-purple-600 text-white rounded-lg font-medium shadow-sm"><Shuffle className="h-4 w-4 mr-2" />碰撞生成 5 个方向</Button>
         </CardContent></Card>
       )}
       {phase === "generating" && (<Card className="border shadow-sm"><CardContent className="py-16 text-center space-y-5"><Loader2 className="h-10 w-10 text-purple-500 animate-spin mx-auto" /><p>{statusMessage||"五步碰撞中…"}</p><Button variant="outline" size="sm" onClick={reset}>取消</Button></CardContent></Card>)}
