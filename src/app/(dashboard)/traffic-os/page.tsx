@@ -10,7 +10,8 @@ import { Shuffle, Loader2, Copy, RotateCcw } from "lucide-react"
 export default function TrafficOSPage() {
   const [niche, setNiche] = useState("")
   const { phase, statusMessage, rawText, error, runTrafficOS, reset } = useGeneration()
-  function handleGenerate() { runTrafficOS(niche) }
+  function extractIds(text: string): string { return (text.match(/^(\d+)/gm)||[]).join(',') }
+  function handleGenerate(prev?: string) { runTrafficOS(niche, prev) }
   if (phase === "complete" && rawText) recordActivity({ type: "traffic-os", niche, title: "Traffic OS", timestamp: Date.now() })
 
   return (
@@ -25,7 +26,7 @@ export default function TrafficOSPage() {
         </CardContent></Card>
       )}
       {phase === "generating" && (<Card className="border shadow-sm"><CardContent className="py-16 text-center space-y-5"><Loader2 className="h-10 w-10 text-purple-500 animate-spin mx-auto" /><p>{statusMessage||"五步碰撞中…"}</p><Button variant="outline" size="sm" onClick={reset}>取消</Button></CardContent></Card>)}
-      {phase === "complete" && rawText && (<div className="space-y-4"><Card className="border shadow-sm"><CardContent className="p-6"><pre className="text-sm whitespace-pre-wrap font-sans leading-relaxed">{rawText}</pre></CardContent></Card><div className="flex gap-3"><Button variant="outline" onClick={() => navigator.clipboard.writeText(rawText)}><Copy className="h-4 w-4 mr-2" />复制</Button><Button variant="outline" onClick={handleGenerate}><Shuffle className="h-4 w-4 mr-2" />换一批</Button><Button variant="outline" onClick={reset}><RotateCcw className="h-4 w-4 mr-2" />重新来</Button></div></div>)}
+      {phase === "complete" && rawText && (<div className="space-y-4"><Card className="border shadow-sm"><CardContent className="p-6"><pre className="text-sm whitespace-pre-wrap font-sans leading-relaxed">{rawText}</pre></CardContent></Card><div className="flex gap-3"><Button variant="outline" onClick={() => navigator.clipboard.writeText(rawText)}><Copy className="h-4 w-4 mr-2" />复制</Button><Button variant="outline" onClick={() => handleGenerate(extractIds(rawText))}><Shuffle className="h-4 w-4 mr-2" />换一批</Button><Button variant="outline" onClick={reset}><RotateCcw className="h-4 w-4 mr-2" />重新来</Button></div></div>)}
       {phase === "error" && (<Card className="border-2 border-destructive/30"><CardContent className="py-12 text-center"><p className="text-destructive mb-4">{error}</p><Button variant="outline" onClick={reset}>返回</Button></CardContent></Card>)}
     </div>
   )

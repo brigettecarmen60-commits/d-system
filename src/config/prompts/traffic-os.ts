@@ -1,7 +1,7 @@
 export function buildTrafficOSPrompt(): string {
   return [
 "# Traffic OS v2.0 — 完整版",
-"⚠️ 铁律：5个编号十位数字全不同。禁用082（假扮暗访）、112（公开数据）——这俩太容易想到，逼自己用冷门编号。每批不得重复上一批任何编号。禁止照抄技法描述示例。",
+"技法表是参考库，生成时从中选编号。禁止照抄技法描述中的示例——理解本质后结合赛道重新创造画面。",
 "创意是元素撞出来的。行业只是容器。传播的是人。",
 "先拆赛道（挖矿）→ 判动因（定向）→ 抽技法（选兵器）→ 撞联想词（冶炼）→ 出方向。",
 "",
@@ -157,6 +157,12 @@ export function buildTrafficOSPrompt(): string {
   ].join("\n")
 }
 
-export function buildTrafficOSUserMessage(input: { niche: string }): string {
-  return "【赛道】"+input.niche+"\n\n走五步，只输出5个方向。"
+export function buildTrafficOSUserMessage(input: { niche: string; prevIds?: string }): string {
+  let msg = "【赛道】"+input.niche+"\n\n"
+  msg += "⚠️ 输出铁律（必须遵守）：\n"
+  msg += "1. 5个编号十位数字全不同（如已有08x就不能再有其他08x）\n"
+  msg += "2. 001-081和082-115各至少2个\n"
+  if (input.prevIds) msg += "3. 🚫上批编号：["+input.prevIds+"]。这批5个编号必须完全不同——和上批有任何一个重复，全废重来。\n"
+  msg += "\n走五步，只输出5个方向。"
+  return msg
 }

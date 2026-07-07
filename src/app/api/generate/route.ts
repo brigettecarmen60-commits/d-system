@@ -614,13 +614,23 @@ async function runSeries(req: NextRequest, userId: string, body: any) {
 // ─── Traffic OS (V3) ──────────────────────────
 
 async function runTrafficOS(req: NextRequest, userId: string, body: any) {
-  const { niche } = body
+  const { niche, prevIds } = body
   if (!niche?.trim()) return Response.json({ error: "请输入赛道" }, { status: 400 })
+  const prevSet = new Set(prevIds ? prevIds.split(',') : [])
   return sse(req, async (send) => {
-    send({ type: "status", phase: "traffic-os", message: "五步碰撞中…" })
-    const r = await streamGenerate(buildTrafficOSPrompt(), buildTrafficOSUserMessage({ niche: niche.trim() }), selectModel("intel"), (t: string) => send({ type: "chunk", content: t }), req.signal)
+    let result, tries = 0
+    let forceMsg = ""
+    while (tries < 5) {
+      tries++
+      send({ type: "status", phase: "traffic-os", message: tries > 1 ? `检测重复，重试第${tries}次…` : "五步碰撞中…" })
+      result = await streamGenerate(buildTrafficOSPrompt(), forceMsg + buildTrafficOSUserMessage({ niche: niche.trim(), prevIds }), selectModel("intel"), () => {}, req.signal)
+      const ids = (result.fullText.match(/^(\d+)/gm)||[])
+      if (prevSet.size === 0 || !ids.some((id:string)=>prevSet.has(id))) break
+      forceMsg = `🚫🚫🚫 上批编号[${[...prevSet].join(',')}]绝对禁止再出现！使用完全不同的编号！🚫🚫🚫\n\n`
+    }
+    for (const ch of result!.fullText) send({ type: "chunk", content: ch })
     await deductCredits(userId, getCreditCost("traffic-os").cost)
-    send({ type: "done", usage: r.usage, cost: getCreditCost("traffic-os").cost })
+    send({ type: "done", usage: result!.usage, cost: getCreditCost("traffic-os").cost })
   })
 }
 
