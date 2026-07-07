@@ -613,6 +613,54 @@ async function runSeries(req: NextRequest, userId: string, body: any) {
 
 // ─── Traffic OS (V3) ──────────────────────────
 
+// 消费动机→技法池映射
+const MOTIVE_POOLS: Record<string, string[]> = {
+  "见闻": "001|074|079|080|044|112|082|085|089".split("|"),
+  "打脸": "007|023|042|037|056|095|098|113".split("|"),
+  "弑神": "004|008|056|088|091|099|105".split("|"),
+  "感动": "015|055|058|064|049|041|103|052|115".split("|"),
+  "窥视": "039|102|043|031|068|100|082|110|054".split("|"),
+  "答案": "078|086|087|089|091|092|093|074|077".split("|"),
+  "好奇": "013|036|032|071|108|114|106|060|065".split("|"),
+  "认可": "016|073|075|076|079|011|004|034".split("|"),
+  "镜子": "052|051|049|040|012|112|100|048".split("|"),
+  "逃避": "007|029|033|025|035|072|109|060|047".split("|"),
+  "参与": "106|107|038|076|067|096|095|020".split("|"),
+  "审判": "008|004|088|091|037|096|092|017".split("|"),
+  "治愈": "041|070|064|022|045|046|103|031|115".split("|"),
+  "解压": "022|090|021|110|109|070|091".split("|"),
+  "惊喜": "023|002|013|030|035|114|108|036".split("|"),
+  "链接": "038|046|067|034|084|031|048|044".split("|"),
+  "优越": "074|080|027|081|050|054|065|069".split("|"),
+  "轻松": "050|065|069|061|073|075|059".split("|"),
+}
+
+function pickTechs(motives: string[], prevSet: Set<string>): string[] {
+  // 收集所有动机池的技法，去重
+  const pool = [...new Set(motives.flatMap(m => MOTIVE_POOLS[m] || []))]
+  // 过滤掉上批用过的
+  const available = pool.filter(t => !prevSet.has(t))
+  if (available.length < 5) return pool.slice(0, 5) // fallback
+  // 按十位数分组，每组随机取
+  const groups: Record<string, string[]> = {}
+  for (const t of available) {
+    const tens = Math.floor(parseInt(t) / 10)
+    if (!groups[tens]) groups[tens] = []
+    groups[tens].push(t)
+  }
+  // 从5个不同十位组各随机取1个（去重）
+  const keys = Object.keys(groups).sort(() => Math.random() - 0.5)
+  const picked: string[] = []
+  const seen = new Set<string>()
+  for (const k of keys) {
+    if (picked.length >= 5) break
+    for (const t of groups[k].sort(() => Math.random() - 0.5)) {
+      if (!seen.has(t)) { seen.add(t); picked.push(t); break }
+    }
+  }
+  return picked.slice(0, 5)
+}
+
 async function runTrafficOS(req: NextRequest, userId: string, body: any) {
   const { niche, prevIds } = body
   if (!niche?.trim()) return Response.json({ error: "请输入赛道" }, { status: 400 })
@@ -621,28 +669,26 @@ async function runTrafficOS(req: NextRequest, userId: string, body: any) {
 
   return sse(req, async (send) => {
     // Step 1: 拆赛道 + 联想词
-    send({ type: "status", phase: "traffic-os", message: "拆解赛道，穷举联想词…" })
+    send({ type: "status", phase: "traffic-os", message: "拆解赛道…" })
     const s1 = await streamGenerate(buildStep1Prompt(), "赛道：" + niche.trim(), model, () => {}, req.signal)
 
-    // Step 2: 判动机 + 抽技法
-    send({ type: "status", phase: "traffic-os", message: "判断消费动机，抽取技法…" })
-    const s2Input = "赛道：" + niche.trim() + "\n\n" + s1.fullText
-    const s2 = await streamGenerate(buildStep2Prompt(), s2Input, model, () => {}, req.signal)
+    // Step 2: 判动机（AI只判断动机，不选技法）
+    send({ type: "status", phase: "traffic-os", message: "判断消费动机…" })
+    const s2 = await streamGenerate(buildStep2Prompt(), "赛道：" + niche.trim() + "\n\n" + s1.fullText, model, () => {}, req.signal)
+    // 从s2输出中提取动机名
+    const motives = s2.fullText.split(/[,，\n]/).map(s => s.trim()).filter(s => MOTIVE_POOLS[s])
 
-    // Step 3: 碰撞输出（带重试去重）
-    let s3, tries = 0
-    while (tries < 5) {
-      tries++
-      send({ type: "status", phase: "traffic-os", message: tries > 1 ? `碰撞中…（第${tries}次）` : "技法×联想词碰撞…" })
-      let s3Input = "赛道：" + niche.trim() + "\n\n" + s1.fullText + "\n" + s2.fullText
-      if (prevSet.size > 0) s3Input = "🚫禁用编号：[" + [...prevSet].join(',') + "]\n\n" + s3Input
-      s3 = await streamGenerate(buildStep3Prompt(), s3Input, model, () => {}, req.signal)
-      const ids = (s3!.fullText.match(/^(\d+)/gm)||[])
-      if (prevSet.size === 0 || !ids.some((id:string)=>prevSet.has(id))) break
-    }
-    for (const ch of s3!.fullText) send({ type: "chunk", content: ch })
+    // 代码抽技法（判断力在规则里）
+    const picked = pickTechs(motives, prevSet)
+    console.log("motives:", motives, "picked:", picked)
+
+    // Step 3: 碰撞输出（AI只做碰撞）
+    send({ type: "status", phase: "traffic-os", message: "技法×联想词碰撞…" })
+    let s3Input = "赛道：" + niche.trim() + "\n\n" + s1.fullText + "\n指定技法编号：" + picked.join(", ")
+    if (prevSet.size > 0) s3Input = "🚫上批用了[" + [...prevSet].join(',') + "]，这批是全新编号\n" + s3Input
+    const s3 = await streamGenerate(buildStep3Prompt(), s3Input, model, (t: string) => send({ type: "chunk", content: t }), req.signal)
     await deductCredits(userId, getCreditCost("traffic-os").cost)
-    send({ type: "done", usage: s3!.usage, cost: getCreditCost("traffic-os").cost })
+    send({ type: "done", usage: s3.usage, cost: getCreditCost("traffic-os").cost })
   })
 }
 
