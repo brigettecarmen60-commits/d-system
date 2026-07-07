@@ -614,11 +614,11 @@ async function runSeries(req: NextRequest, userId: string, body: any) {
 // ─── Traffic OS (V3) ──────────────────────────
 
 async function runTrafficOS(req: NextRequest, userId: string, body: any) {
-  const { niche, techniques } = body
-  if (!niche?.trim() || !techniques?.trim()) return Response.json({ error: "请输入赛道并选择5个技法" }, { status: 400 })
+  const { niche } = body
+  if (!niche?.trim()) return Response.json({ error: "请输入赛道" }, { status: 400 })
   return sse(req, async (send) => {
-    send({ type: "status", phase: "traffic-os", message: "技法碰撞中…" })
-    const r = await streamGenerate(buildTrafficOSPrompt(), buildTrafficOSUserMessage({ niche: niche.trim(), techniques }), selectModel("intel"), (t: string) => send({ type: "chunk", content: t }), req.signal)
+    send({ type: "status", phase: "traffic-os", message: "五步碰撞中…" })
+    const r = await streamGenerate(buildTrafficOSPrompt(), buildTrafficOSUserMessage({ niche: niche.trim() }), selectModel("intel"), (t: string) => send({ type: "chunk", content: t }), req.signal)
     await deductCredits(userId, getCreditCost("traffic-os").cost)
     send({ type: "done", usage: r.usage, cost: getCreditCost("traffic-os").cost })
   })

@@ -22,7 +22,7 @@ export default function HitPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <h1 className="text-2xl font-bold flex items-center gap-2"><Flame className="h-6 w-6 text-red-500" />爆款设计</h1>
+      <h1 className="text-2xl font-bold flex items-center gap-2"><Flame className="h-6 w-6 text-red-500" />共识挖掘</h1>
       <p className="text-sm text-muted-foreground">拿一个选题，找到最强的反差和冲突，设计一个观众不转发就难受的瞬间。目标是100万+播放。</p>
 
       {phase === "idle" && (

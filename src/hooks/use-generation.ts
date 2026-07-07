@@ -93,8 +93,8 @@ export function useGeneration() {
     await streamFetch({ mode: "retell", material: material.trim(), framework: framework || "auto", structure: structure || "auto", emotion: emotion || "auto", medium: medium || "auto" })
   }, [streamFetch])
 
-  const runTrafficOS = useCallback(async (niche: string, techniques: string) => {
-    await streamFetch({ mode: "traffic-os", niche: niche.trim(), techniques })
+  const runTrafficOS = useCallback(async (niche: string) => {
+    await streamFetch({ mode: "traffic-os", niche: niche.trim() })
   }, [streamFetch])
 
   const runHitDesigner = useCallback(async (topic: string, niche: string, material?: string, dna?: string) => {

@@ -19,15 +19,15 @@ const navGroups = [
     items: [
       { title: "赛道分析", href: "/analyze", icon: Search },
       { title: "个人定位", href: "/positioning", icon: Compass },
+      { title: "普通人挖掘", href: "/c-content", icon: Coffee },
     ],
   },
   {
     label: "策划",
     items: [
       { title: "系列策划", href: "/series", icon: Film },
-      { title: "爆款设计", href: "/hit", icon: Flame },
+      { title: "共识挖掘", href: "/hit", icon: Flame },
       { title: "Traffic OS", href: "/traffic-os", icon: Shuffle },
-      { title: "普通人挖掘", href: "/c-content", icon: Coffee },
       { title: "选题生成", href: "/topics", icon: Lightbulb },
     ],
   },

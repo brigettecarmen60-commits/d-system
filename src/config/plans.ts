@@ -63,7 +63,7 @@ export const CREDIT_COSTS = {
   script:      { cost: 10, label: "脚本生成",        model: "deepseek-reasoner" },
   seeding:     { cost: 20, label: "剧情种草",        model: "deepseek-reasoner" },
   series:      { cost: 5,  label: "系列策划",        model: "deepseek-chat" },
-  hit:         { cost: 5,  label: "爆款设计",        model: "deepseek-chat" },
+  hit:         { cost: 5,  label: "共识挖掘",        model: "deepseek-chat" },
   "traffic-os": { cost: 3,  label: "Traffic OS",     model: "deepseek-chat" },
   sprint:      { cost: 8,  label: "两周冲刺",        model: "deepseek-chat" },
   "script-copy": { cost: 8,  label: "纯文案脚本",    model: "deepseek-reasoner" },
