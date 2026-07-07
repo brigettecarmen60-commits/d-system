@@ -27,7 +27,7 @@ import { buildHotTopicPrompt, buildHotTopicUserMessage } from "@/config/prompts/
 import { buildScriptCopyPrompt, buildScriptCopyUserMessage } from "@/config/prompts/script"
 import { buildConvertScriptPrompt, buildConvertScriptRoutingPrompt, buildConvertScriptRoutingUserMessage, buildConvertScriptGenUserMessage } from "@/config/prompts/convert-script"
 import { buildSeriesPrompt, buildSeriesUserMessage } from "@/config/prompts/series"
-import { buildTrafficOSPrompt, buildTrafficOSUserMessage } from "@/config/prompts/traffic-os"
+import { buildStep1Prompt, buildStep2Prompt, buildStep3Prompt } from "@/config/prompts/traffic-os"
 import { buildHitDesignerPrompt, buildHitDesignerUserMessage } from "@/config/prompts/hit-designer"
 import {
   extractAnglesFromOutput,
@@ -617,20 +617,32 @@ async function runTrafficOS(req: NextRequest, userId: string, body: any) {
   const { niche, prevIds } = body
   if (!niche?.trim()) return Response.json({ error: "请输入赛道" }, { status: 400 })
   const prevSet = new Set(prevIds ? prevIds.split(',') : [])
+  const model = selectModel("intel")
+
   return sse(req, async (send) => {
-    let result, tries = 0
-    let forceMsg = ""
+    // Step 1: 拆赛道 + 联想词
+    send({ type: "status", phase: "traffic-os", message: "拆解赛道，穷举联想词…" })
+    const s1 = await streamGenerate(buildStep1Prompt(), "赛道：" + niche.trim(), model, () => {}, req.signal)
+
+    // Step 2: 判动机 + 抽技法
+    send({ type: "status", phase: "traffic-os", message: "判断消费动机，抽取技法…" })
+    const s2Input = "赛道：" + niche.trim() + "\n\n" + s1.fullText
+    const s2 = await streamGenerate(buildStep2Prompt(), s2Input, model, () => {}, req.signal)
+
+    // Step 3: 碰撞输出（带重试去重）
+    let s3, tries = 0
     while (tries < 5) {
       tries++
-      send({ type: "status", phase: "traffic-os", message: tries > 1 ? `检测重复，重试第${tries}次…` : "五步碰撞中…" })
-      result = await streamGenerate(buildTrafficOSPrompt(), forceMsg + buildTrafficOSUserMessage({ niche: niche.trim(), prevIds }), selectModel("intel"), () => {}, req.signal)
-      const ids = (result.fullText.match(/^(\d+)/gm)||[])
+      send({ type: "status", phase: "traffic-os", message: tries > 1 ? `碰撞中…（第${tries}次）` : "技法×联想词碰撞…" })
+      let s3Input = "赛道：" + niche.trim() + "\n\n" + s1.fullText + "\n" + s2.fullText
+      if (prevSet.size > 0) s3Input = "🚫禁用编号：[" + [...prevSet].join(',') + "]\n\n" + s3Input
+      s3 = await streamGenerate(buildStep3Prompt(), s3Input, model, () => {}, req.signal)
+      const ids = (s3!.fullText.match(/^(\d+)/gm)||[])
       if (prevSet.size === 0 || !ids.some((id:string)=>prevSet.has(id))) break
-      forceMsg = `🚫🚫🚫 上批编号[${[...prevSet].join(',')}]绝对禁止再出现！使用完全不同的编号！🚫🚫🚫\n\n`
     }
-    for (const ch of result!.fullText) send({ type: "chunk", content: ch })
+    for (const ch of s3!.fullText) send({ type: "chunk", content: ch })
     await deductCredits(userId, getCreditCost("traffic-os").cost)
-    send({ type: "done", usage: result!.usage, cost: getCreditCost("traffic-os").cost })
+    send({ type: "done", usage: s3!.usage, cost: getCreditCost("traffic-os").cost })
   })
 }
 
