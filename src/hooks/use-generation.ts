@@ -94,7 +94,7 @@ export function useGeneration() {
   }, [streamFetch])
 
   const runTrafficOS = useCallback(async (niche: string, prevIds?: string) => {
-    await streamFetch({ mode: "traffic-os", niche: niche.trim(), prevIds: prevIds || undefined })
+    await streamFetch({ mode: "traffic-os", niche: niche?.trim?.() || "", prevIds: prevIds || undefined })
   }, [streamFetch])
 
   const runHitDesigner = useCallback(async (topic: string, niche: string, material?: string, dna?: string) => {
