@@ -102,7 +102,7 @@ export function useGeneration() {
   }, [streamFetch])
 
   const runSeries = useCallback(async (niche: string, edge: string, dna?: string) => {
-    await streamFetch({ mode: "series", niche: niche.trim(), edge: edge?.trim() || undefined, dna: dna || undefined })
+    await streamFetch({ mode: "series", niche: niche?.trim?.() || "", edge: edge?.trim?.() || undefined, dna: dna || undefined })
   }, [streamFetch])
 
   const runSprint = useCallback(async (stage: string, goal: string, niche?: string, recentData?: string) => {

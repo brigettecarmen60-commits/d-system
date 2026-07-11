@@ -600,7 +600,7 @@ async function runSeries(req: NextRequest, userId: string, body: any) {
     send({ type: "status", phase: "series", message: "扫描内容矿脉 → 找系列钩子 → 策划方向…" })
     const r = await streamGenerate(
       buildSeriesPrompt(),
-      buildSeriesUserMessage({ niche: niche.trim(), edge: edge.trim(), dna }),
+      buildSeriesUserMessage({ niche: niche.trim(), edge: edge?.trim?.() || "", dna }),
       model,
       (t: string) => send({ type: "chunk", content: t }),
       req.signal
