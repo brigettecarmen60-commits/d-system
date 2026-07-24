@@ -695,7 +695,7 @@ function pickTechs(motives: string[], prevSet: Set<string>): string[] {
 async function runTrafficOS(req: NextRequest, userId: string, body: any) {
   const { niche, prevIds } = body
   if (!niche?.trim?.()) return Response.json({ error: "请输入赛道" }, { status: 400 })
-  const prevSet = new Set(prevIds ? prevIds.split(',') : [])
+  const prevSet = new Set<string>(prevIds ? prevIds.split(',') : [])
   const model = selectModel("intel")
 
   return sse(req, async (send) => {
