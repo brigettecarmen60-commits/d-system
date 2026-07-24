@@ -27,7 +27,6 @@ import { buildHotTopicPrompt, buildHotTopicUserMessage } from "@/config/prompts/
 import { buildScriptCopyPrompt, buildScriptCopyUserMessage } from "@/config/prompts/script"
 import { buildConvertScriptPrompt, buildConvertScriptRoutingPrompt, buildConvertScriptRoutingUserMessage, buildConvertScriptGenUserMessage } from "@/config/prompts/convert-script"
 import { buildSeriesPrompt, buildSeriesUserMessage } from "@/config/prompts/series"
-import { buildTrafficOSPrompt } from "@/config/prompts/traffic-os"
 import { buildHitDesignerPrompt, buildHitDesignerUserMessage } from "@/config/prompts/hit-designer"
 import {
   extractAnglesFromOutput,
@@ -130,7 +129,6 @@ export async function POST(req: NextRequest) {
     case "sprint":           return runSprint(req, userId, body)
     case "series":           return runSeries(req, userId, body)
     case "hit":              return runHitDesigner(req, userId, body)
-    case "traffic-os":        return runTrafficOS(req, userId, body)
     case "convert-script":  return runConvertScript(req, userId, body)
     case "redian":           return runRedian(req, userId, body)
     case "weigui":           return runWeigui(req, userId, body)
@@ -614,107 +612,6 @@ async function runSeries(req: NextRequest, userId: string, body: any) {
 // ─── Traffic OS (V3) ──────────────────────────
 
 // 消费动机→技法池映射
-const MOTIVE_POOLS: Record<string, string[]> = {
-  "见闻": "001|074|079|080|044|112|082|085|089".split("|"),
-  "打脸": "007|023|042|037|056|095|098|113".split("|"),
-  "弑神": "004|008|056|088|091|099|105".split("|"),
-  "感动": "015|055|058|064|049|041|103|052|115".split("|"),
-  "窥视": "039|102|043|031|068|100|082|110|054".split("|"),
-  "答案": "078|086|087|089|091|092|093|074|077".split("|"),
-  "好奇": "013|036|032|071|108|114|106|060|065".split("|"),
-  "认可": "016|073|075|076|079|011|004|034".split("|"),
-  "镜子": "052|051|049|040|012|112|100|048".split("|"),
-  "逃避": "007|029|033|025|035|072|109|060|047".split("|"),
-  "参与": "106|107|038|076|067|096|095|020".split("|"),
-  "审判": "008|004|088|091|037|096|092|017".split("|"),
-  "治愈": "041|070|064|022|045|046|103|031|115".split("|"),
-  "解压": "022|090|021|110|109|070|091".split("|"),
-  "惊喜": "023|002|013|030|035|114|108|036".split("|"),
-  "链接": "038|046|067|034|084|031|048|044".split("|"),
-  "优越": "074|080|027|081|050|054|065|069".split("|"),
-  "轻松": "050|065|069|061|073|075|059".split("|"),
-}
-
-// 只返回选中技法的描述（精简prompt）
-function getTechDescriptions(ids: string[]): string {
-  const ALL: Record<string, string> = {
-    "001":"001内部人员揭秘：前员工/内行爆料行业内幕、利益链、避坑指南",
-    "002":"002强反差：效果图vs实物、预期vs结果、身份vs行为不匹配",
-    "003":"003没事找事测试：买齐所有品牌对比/送检/实测/数数/称重",
-    "004":"004吐槽共同敌人：代表某一方说话，找到共同敌人带领观众一起骂",
-    "005":"005罪己诏/降低预期：晒翻车、主动暴露弱点、承认失败。低开高走",
-    "023":"023扮猪吃虎：本质=压抑→释放。先展示真实的不行/挫→再展示行/惊人。错用=假装外行被嘲笑→掏出证书打脸（需要群演）",
-    "049":"049十年体：本质=时间跨度制造情感冲击。错用=编励志故事。正用=真实时间锚点+现在对比",
-    "082":"082假扮客户暗访同行：不预约直接进同行店，装不懂行客户带手机偷拍真实交易。本质=以消费者身份记录真实场景",
-    "091":"091剖开内部看真相：把看起来差不多的产品剖开展示内部结构差。本质=看不见的差异变看得见的画面",
-    "096":"096让小孩当评委：让5-12岁小孩用自己标准评判成年人的事。本质=不同视角产生新发现",
-    "100":"100跟拍我一个工作日：从早到晚POV跟拍。本质=真实过程的沉浸记录，选有冲突的那天",
-    "105":"105让不该出现的人做这件事：让和这事八竿子打不着的人来做。本质=错位视角产生新发现，不是猎奇",
-    "115":"115给特殊身份的人送礼物：找到有特殊身份/故事的人他需要的东西恰好你能提供。本质=传播尊重不是免费送东西感动营销",
-  }
-  return ids.map(id => ALL[id] || (id + "：见技法总表")).join("\n")
-}
-
-function pickTechs(motives: string[], prevSet: Set<string>): string[] {
-  // 收集所有动机池的技法，去重
-  const pool = [...new Set(motives.flatMap(m => MOTIVE_POOLS[m] || []))]
-  // 过滤掉上批用过的
-  const available = pool.filter(t => !prevSet.has(t))
-  if (available.length < 5) return pool.slice(0, 5) // fallback
-  // 按十位数分组，每组随机取
-  const groups: Record<string, string[]> = {}
-  for (const t of available) {
-    const tens = Math.floor(parseInt(t) / 10)
-    if (!groups[tens]) groups[tens] = []
-    groups[tens].push(t)
-  }
-  // 分开082-115和001-081，确保至少2个来自082-115
-  const exec = available.filter(t => parseInt(t) >= 82)
-  const psych = available.filter(t => parseInt(t) <= 81)
-  const picked: string[] = []
-  // 先随机取2个执行型
-  for (let i = 0; i < 2 && exec.length > 0; i++) {
-    const idx = Math.floor(Math.random() * exec.length)
-    picked.push(exec.splice(idx, 1)[0])
-  }
-  // 再随机取3个心理型
-  for (let i = 0; i < 3 && psych.length > 0; i++) {
-    const idx = Math.floor(Math.random() * psych.length)
-    picked.push(psych.splice(idx, 1)[0])
-  }
-  // 不够5个的从剩余池补
-  const rest = [...exec, ...psych]
-  while (picked.length < 5 && rest.length > 0) {
-    const idx = Math.floor(Math.random() * rest.length)
-    const t = rest.splice(idx, 1)[0]
-    if (!picked.includes(t)) picked.push(t)
-  }
-  return picked.slice(0, 5)
-}
-
-async function runTrafficOS(req: NextRequest, userId: string, body: any) {
-  const { niche, prevIds } = body
-  if (!niche?.trim?.()) return Response.json({ error: "请输入赛道" }, { status: 400 })
-  const prevSet = new Set<string>(prevIds ? prevIds.split(',') : [])
-  const model = selectModel("intel")
-
-  return sse(req, async (send) => {
-    send({ type: "status", phase: "traffic-os", message: "拆解赛道…" })
-
-    // 判动机（快速小prompt）
-    const sMotives = await streamGenerate(
-      "判断赛道触发哪3-5种消费动机（见闻/打脸/弑神/感动/窥视/答案/好奇/认可/镜子/逃避/参与/审判/治愈/解压/惊喜/链接/优越/轻松）。只输出动机名。",
-      "赛道：" + niche.trim(), model, () => {}, req.signal)
-    const motives = sMotives.fullText.split(/[,，\n]/).map((s: string) => s.trim()).filter((s: string) => MOTIVE_POOLS[s])
-    const picked = pickTechs(motives, prevSet)
-
-    // 单次全流程（速度优先）
-    send({ type: "status", phase: "traffic-os", message: "技法碰撞…" })
-    const userMsg = "赛道：" + niche.trim() + "\n指定技法编号：" + picked.join(", ")
-    const result = await streamGenerate(buildTrafficOSPrompt(), userMsg, model, (t: string) => send({ type: "chunk", content: t }), req.signal)
-    await deductCredits(userId, getCreditCost("traffic-os").cost)
-    send({ type: "done", usage: result.usage, cost: getCreditCost("traffic-os").cost })
-  })
 }
 
 // ─── Hit Designer (V3) ──────────────────────────
