@@ -70,7 +70,6 @@ export const CREDIT_COSTS = {
   "convert-script": { cost: 10, label: "转化脚本",   model: "deepseek-reasoner" },
   redian:      { cost: 6,  label: "热点选题",        model: "deepseek-chat" },
   weigui:      { cost: 3,  label: "违规检测",        model: "deepseek-chat" },
-  "traffic-os": { cost: 6,  label: "创意实验室",       model: "deepseek-chat" },
   // Claude 深度模式（未来）
   "claude-topic":  { cost: 6,  label: "Claude 深度选题", model: "claude" },
   "claude-script": { cost: 15, label: "Claude 深度脚本", model: "claude" },
